@@ -1,0 +1,40 @@
+{
+  "name": "eslint-plugin-rezor",
+  "version": "0.0.0",
+  "type": "module",
+  "description": "ESLint rules for Rezor",
+  "main": "index.js",
+  "repository": "https://github.com/rezorjs/eslint-plugin-rezor.git",
+  "author": "Yang Mingshan <y.mingshan3@gmail.com>",
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "default": "./index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "format": "prettier --check \"**/*.{js,json,md}\"",
+    "lint": "eslint .",
+    "type": "tsc --noEmit",
+    "prepare": "husky"
+  },
+  "keywords": [
+    "eslint",
+    "plugin",
+    "rezor"
+  ],
+  "peerDependencies": {
+    "eslint": "^10.9.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/estree": "^1.0.9",
+    "eslint": "^10.9.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.3.0",
+    "prettier": "^3.9.6",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.67.0"
+  }
+}
