@@ -2,12 +2,8 @@ import { RuleTester } from 'eslint'
 import { parser } from 'typescript-eslint'
 import rule from '../src/rules/exhaustive-deps.ts'
 
-const jsRuleTester = new RuleTester({
-  languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
-})
-const tsRuleTester = new RuleTester({
-  languageOptions: { parser, parserOptions: { ecmaFeatures: { jsx: true } } },
-})
+const jsRuleTester = new RuleTester()
+const tsRuleTester = new RuleTester({ languageOptions: { parser } })
 
 /**
  * A string template tag that removes padding from the left side of multi-line strings
@@ -23,7 +19,7 @@ const tests = {
   valid: [
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local = {};
           useEffect(() => {
             console.log(local);
@@ -33,7 +29,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           useEffect(() => {
             const local = {};
             console.log(local);
@@ -43,7 +39,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local = someFunc();
           useEffect(() => {
             console.log(local);
@@ -58,7 +54,7 @@ const tests = {
       // a component-level variable. Ignore it until it
       //  gets defined (a different rule would flag it anyway).
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           useEffect(() => {
             console.log(props.foo);
           }, []);
@@ -67,7 +63,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local1 = {};
           {
             const local2 = {};
@@ -81,7 +77,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local1 = someFunc();
           {
             const local2 = someFunc();
@@ -95,9 +91,9 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local1 = someFunc();
-          function MyNestedComponent() {
+          function useMyNestedComponent() {
             const local2 = someFunc();
             useCallback(() => {
               console.log(local1);
@@ -109,7 +105,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local = someFunc();
           useEffect(() => {
             console.log(local);
@@ -120,7 +116,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           useEffect(() => {
             console.log(unresolved);
           }, []);
@@ -129,7 +125,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local = someFunc();
           useEffect(() => {
             console.log(local);
@@ -140,7 +136,7 @@ const tests = {
     {
       // Regression test
       code: normalizeIndent`
-        function MyComponent({ foo }) {
+        function useMyComponent({ foo }) {
           useEffect(() => {
             console.log(foo.length);
           }, [foo]);
@@ -150,7 +146,7 @@ const tests = {
     {
       // Regression test
       code: normalizeIndent`
-        function MyComponent({ foo }) {
+        function useMyComponent({ foo }) {
           useEffect(() => {
             console.log(foo.length);
             console.log(foo.slice(0));
@@ -161,7 +157,7 @@ const tests = {
     {
       // Regression test
       code: normalizeIndent`
-        function MyComponent({ history }) {
+        function useMyComponent({ history }) {
           useEffect(() => {
             return history.listen();
           }, [history]);
@@ -170,7 +166,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useEffect(() => {
             console.log(props.foo);
           }, [props.foo]);
@@ -179,7 +175,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useEffect(() => {
             console.log(props.foo);
             console.log(props.bar);
@@ -189,7 +185,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useEffect(() => {
             console.log(props.foo);
             console.log(props.bar);
@@ -199,7 +195,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           const local = someFunc();
           useEffect(() => {
             console.log(props.foo);
@@ -214,7 +210,7 @@ const tests = {
       // However, it's valid for effects to over-specify their deps.
       // So we don't warn about this. We *would* warn about useMemo/useCallback.
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           const local = {};
           useEffect(() => {
             console.log(props.foo);
@@ -232,7 +228,7 @@ const tests = {
     // Nullish coalescing and optional chaining
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useEffect(() => {
             console.log(props.foo?.bar?.baz ?? null);
           }, [props.foo]);
@@ -241,7 +237,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useEffect(() => {
             console.log(props.foo?.bar);
           }, [props.foo?.bar]);
@@ -250,7 +246,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useEffect(() => {
             console.log(props.foo?.bar);
           }, [props.foo.bar]);
@@ -259,7 +255,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useEffect(() => {
             console.log(props.foo.bar);
           }, [props.foo?.bar]);
@@ -268,7 +264,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useEffect(() => {
             console.log(props.foo.bar);
             console.log(props.foo?.bar);
@@ -278,7 +274,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useEffect(() => {
             console.log(props.foo.bar);
             console.log(props.foo?.bar);
@@ -288,7 +284,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useEffect(() => {
             console.log(props.foo);
             console.log(props.foo?.bar);
@@ -298,7 +294,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useEffect(() => {
             console.log(props.foo?.toString());
           }, [props.foo]);
@@ -307,7 +303,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useMemo(() => {
             console.log(props.foo?.toString());
           }, [props.foo]);
@@ -316,7 +312,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useCallback(() => {
             console.log(props.foo?.toString());
           }, [props.foo]);
@@ -325,7 +321,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useCallback(() => {
             console.log(props.foo.bar?.toString());
           }, [props.foo.bar]);
@@ -334,7 +330,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useCallback(() => {
             console.log(props.foo?.bar?.toString());
           }, [props.foo.bar]);
@@ -343,7 +339,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useCallback(() => {
             console.log(props.foo.bar.toString());
           }, [props?.foo?.bar]);
@@ -352,7 +348,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useCallback(() => {
             console.log(props.foo?.bar?.baz);
           }, [props?.foo.bar?.baz]);
@@ -361,7 +357,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const myEffect = () => {
             // Doesn't use anything
           };
@@ -372,7 +368,7 @@ const tests = {
     {
       code: normalizeIndent`
         const local = {};
-        function MyComponent() {
+        function useMyComponent() {
           const myEffect = () => {
             console.log(local);
           };
@@ -383,7 +379,7 @@ const tests = {
     {
       code: normalizeIndent`
         const local = {};
-        function MyComponent() {
+        function useMyComponent() {
           function myEffect() {
             console.log(local);
           }
@@ -393,7 +389,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local = someFunc();
           function myEffect() {
             console.log(local);
@@ -404,7 +400,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           function myEffect() {
             console.log(global);
           }
@@ -415,7 +411,7 @@ const tests = {
     {
       code: normalizeIndent`
         const local = {};
-        function MyComponent() {
+        function useMyComponent() {
           const myEffect = () => {
             otherThing()
           }
@@ -430,7 +426,7 @@ const tests = {
       // Valid because even though we don't inspect the function itself,
       // at least it's passed as a dependency.
       code: normalizeIndent`
-        function MyComponent({delay}) {
+        function useMyComponent({delay}) {
           const local = {};
           const myEffect = debounce(() => {
             console.log(local);
@@ -441,14 +437,14 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent({myEffect}) {
+        function useMyComponent({myEffect}) {
           useEffect(myEffect, [,myEffect]);
         }
       `,
     },
     {
       code: normalizeIndent`
-        function MyComponent({myEffect}) {
+        function useMyComponent({myEffect}) {
           useEffect(myEffect, [,myEffect,,]);
         }
       `,
@@ -459,14 +455,14 @@ const tests = {
         function myEffect() {
           console.log(local);
         }
-        function MyComponent() {
+        function useMyComponent() {
           useEffect(myEffect, []);
         }
       `,
     },
     {
       code: normalizeIndent`
-        function MyComponent({myEffect}) {
+        function useMyComponent({myEffect}) {
           useEffect(myEffect, [myEffect]);
         }
       `,
@@ -474,14 +470,14 @@ const tests = {
     {
       // Valid because has no deps.
       code: normalizeIndent`
-        function MyComponent({myEffect}) {
+        function useMyComponent({myEffect}) {
           useEffect(myEffect);
         }
       `,
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useCustomEffect(() => {
             console.log(props.foo);
           });
@@ -491,7 +487,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useCustomEffect(() => {
             console.log(props.foo);
           }, [props.foo]);
@@ -501,7 +497,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useCustomEffect(() => {
             console.log(props.foo);
           }, []);
@@ -511,7 +507,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useWithoutEffectSuffix(() => {
             console.log(props.foo);
           }, []);
@@ -520,7 +516,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           return renderHelperConfusedWithEffect(() => {
             console.log(props.foo);
           }, []);
@@ -551,7 +547,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const ref = useRef();
           useEffect(() => {
             console.log(ref.current);
@@ -561,7 +557,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const ref = useRef();
           useEffect(() => {
             console.log(ref.current);
@@ -571,7 +567,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent({ maybeRef2 }) {
+        function useMyComponent({ maybeRef2 }) {
           const definitelyRef1 = useRef();
           const definitelyRef2 = useRef();
           const maybeRef1 = useSomeOtherRefyThing();
@@ -632,7 +628,7 @@ const tests = {
       // too many false positives. We do, however, prevent
       // direct assignments.
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           let obj = someFunc();
           useEffect(() => {
             obj.foo = true;
@@ -642,7 +638,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           let foo = {}
           useEffect(() => {
             foo.bar.baz = 43;
@@ -655,7 +651,7 @@ const tests = {
       // ourselves. Therefore it's likely not
       // a ref managed by
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const myRef = useRef();
           useEffect(() => {
             const handleMove = () => {};
@@ -664,7 +660,7 @@ const tests = {
               console.log(myRef.current.toString())
             };
           }, []);
-          return <div />;
+          return {};
         }
       `,
     },
@@ -673,7 +669,7 @@ const tests = {
       // ourselves. Therefore it's likely not
       // a ref managed by
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const myRef = useRef();
           useEffect(() => {
             const handleMove = () => {};
@@ -682,7 +678,7 @@ const tests = {
               console.log(myRef?.current?.toString())
             };
           }, []);
-          return <div />;
+          return {};
         }
       `,
     },
@@ -705,7 +701,7 @@ const tests = {
     {
       // Valid because the ref is captured.
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const myRef = useRef();
           useEffect(() => {
             const handleMove = () => {};
@@ -713,7 +709,7 @@ const tests = {
             node.addEventListener('mousemove', handleMove);
             return () => node.removeEventListener('mousemove', handleMove);
           }, []);
-          return <div ref={myRef} />;
+          return { myRef };
         }
       `,
     },
@@ -727,7 +723,7 @@ const tests = {
             node.addEventListener('mousemove', handleMove);
             return () => node.removeEventListener('mousemove', handleMove);
           }, [myRef]);
-          return <div ref={myRef} />;
+          return { myRef };
         }
       `,
     },
@@ -761,7 +757,7 @@ const tests = {
             window.addEventListener('mousemove', handleMove);
             return () => window.removeEventListener('mousemove', handleMove);
           }, []);
-          return <div ref={myRef} />;
+          return { myRef };
         }
       `,
     },
@@ -777,14 +773,14 @@ const tests = {
             window.addEventListener('mousemove', handleMove);
             return () => {};
           }, []);
-          return <div ref={myRef} />;
+          return { myRef };
         }
       `,
     },
     {
       // Valid because it's a primitive constant.
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local1 = 42;
           const local2 = '42';
           const local3 = null;
@@ -799,7 +795,7 @@ const tests = {
     {
       // It's not a mistake to specify constant values though.
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local1 = 42;
           const local2 = '42';
           const local3 = null;
@@ -814,7 +810,7 @@ const tests = {
     {
       // It is valid for effects to over-specify their deps.
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           const local = props.local;
           useEffect(() => {}, [local]);
         }
@@ -824,7 +820,7 @@ const tests = {
       // Valid even though activeTab is "unused".
       // We allow over-specifying deps for effects, but not callbacks or memo.
       code: normalizeIndent`
-        function Foo({ activeTab }) {
+        function useFoo({ activeTab }) {
           useEffect(() => {
             window.scrollTo(0, 0);
           }, [activeTab]);
@@ -835,7 +831,7 @@ const tests = {
       // It is valid to specify broader effect deps than strictly necessary.
       // Don't warn for this.
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useEffect(() => {
             console.log(props.foo.bar.baz);
           }, [props]);
@@ -855,7 +851,7 @@ const tests = {
       // It is *also* valid to specify broader memo/callback deps than strictly necessary.
       // Don't warn for this either.
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           const fn = useCallback(() => {
             console.log(props.foo.bar.baz);
           }, [props]);
@@ -892,7 +888,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Counter() {
+        function useCounter() {
           const [count, setCount] = useState(0);
 
           useEffect(() => {
@@ -902,13 +898,13 @@ const tests = {
             return () => clearInterval(id);
           }, []);
 
-          return <h1>{count}</h1>;
+          return { count };
         }
       `,
     },
     {
       code: normalizeIndent`
-        function Counter(unstableProp) {
+        function useCounter(unstableProp) {
           let [count, setCount] = useState(0);
           setCount = unstableProp
           useEffect(() => {
@@ -918,13 +914,13 @@ const tests = {
             return () => clearInterval(id);
           }, [setCount]);
 
-          return <h1>{count}</h1>;
+          return { count };
         }
       `,
     },
     {
       code: normalizeIndent`
-        function Counter() {
+        function useCounter() {
           const [count, setCount] = useState(0);
 
           function tick() {
@@ -938,13 +934,13 @@ const tests = {
             return () => clearInterval(id);
           }, []);
 
-          return <h1>{count}</h1>;
+          return { count };
         }
       `,
     },
     {
       code: normalizeIndent`
-        function Counter() {
+        function useCounter() {
           const [count, dispatch] = useReducer((state, action) => {
             if (action === 'inc') {
               return state + 1;
@@ -958,13 +954,13 @@ const tests = {
             return () => clearInterval(id);
           }, []);
 
-          return <h1>{count}</h1>;
+          return { count };
         }
       `,
     },
     {
       code: normalizeIndent`
-        function Counter() {
+        function useCounter() {
           const [count, dispatch] = useReducer((state, action) => {
             if (action === 'inc') {
               return state + 1;
@@ -980,14 +976,14 @@ const tests = {
             return () => clearInterval(id);
           }, []);
 
-          return <h1>{count}</h1>;
+          return { count };
         }
       `,
     },
     {
       // Regression test for a crash
       code: normalizeIndent`
-        function Podcasts() {
+        function usePodcasts() {
           useEffect(() => {
             setPodcasts([]);
           }, []);
@@ -998,7 +994,7 @@ const tests = {
     {
       code: normalizeIndent`
         function withFetch(fetchPodcasts) {
-          return function Podcasts({ id }) {
+          return function usePodcasts({ id }) {
             let [podcasts, setPodcasts] = useState(null);
             useEffect(() => {
               fetchPodcasts(id).then(setPodcasts);
@@ -1009,7 +1005,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Podcasts({ id }) {
+        function usePodcasts({ id }) {
           let [podcasts, setPodcasts] = useState(null);
           useEffect(() => {
             function doFetch({ fetchPodcasts }) {
@@ -1022,7 +1018,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Counter() {
+        function useCounter() {
           let [count, setCount] = useState(0);
 
           function increment(x) {
@@ -1036,13 +1032,13 @@ const tests = {
             return () => clearInterval(id);
           }, []);
 
-          return <h1>{count}</h1>;
+          return { count };
         }
       `,
     },
     {
       code: normalizeIndent`
-        function Counter() {
+        function useCounter() {
           let [count, setCount] = useState(0);
 
           function increment(x) {
@@ -1056,14 +1052,14 @@ const tests = {
             return () => clearInterval(id);
           }, []);
 
-          return <h1>{count}</h1>;
+          return { count };
         }
       `,
     },
     {
       code: normalizeIndent`
         import increment from './increment';
-        function Counter() {
+        function useCounter() {
           let [count, setCount] = useState(0);
 
           useEffect(() => {
@@ -1073,14 +1069,14 @@ const tests = {
             return () => clearInterval(id);
           }, []);
 
-          return <h1>{count}</h1>;
+          return { count };
         }
       `,
     },
     {
       code: normalizeIndent`
         function withStuff(increment) {
-          return function Counter() {
+          return function useCounter() {
             let [count, setCount] = useState(0);
 
             useEffect(() => {
@@ -1090,15 +1086,15 @@ const tests = {
               return () => clearInterval(id);
             }, []);
 
-            return <h1>{count}</h1>;
+            return { count };
           }
         }
       `,
     },
     {
       code: normalizeIndent`
-        function App() {
-          const [query, setQuery] = useState('react');
+        function useApp() {
+          const [query, setQuery] = useState('rezor');
           const [state, setState] = useState(null);
           useEffect(() => {
             let ignore = false;
@@ -1109,18 +1105,13 @@ const tests = {
             }
             return () => { ignore = true; };
           }, [query]);
-          return (
-            <>
-              <input value={query} onChange={e => setQuery(e.target.value)} />
-              {JSON.stringify(state)}
-            </>
-          );
+          return { query, state, setQuery };
         }
       `,
     },
     {
       code: normalizeIndent`
-        function Example() {
+        function useExample() {
           const foo = useCallback(() => {
             foo();
           }, []);
@@ -1129,7 +1120,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Example({ prop }) {
+        function useExample({ prop }) {
           const foo = useCallback(() => {
             if (prop) {
               foo();
@@ -1140,7 +1131,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Hello() {
+        function useHello() {
           const [state, setState] = useState(0);
           useEffect(() => {
             const handleResize = () => setState(window.innerWidth);
@@ -1153,7 +1144,7 @@ const tests = {
     // Ignore arguments keyword for arrow functions.
     {
       code: normalizeIndent`
-        function Example() {
+        function useExample() {
           useEffect(() => {
             arguments
           }, [])
@@ -1162,7 +1153,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Example() {
+        function useExample() {
           useEffect(() => {
             const bar = () => {
               arguments;
@@ -1175,7 +1166,7 @@ const tests = {
     // Regression test.
     {
       code: normalizeIndent`
-        function Example(props) {
+        function useExample(props) {
           useEffect(() => {
             let topHeight = 0;
             topHeight = props.upperViewHeight;
@@ -1186,7 +1177,7 @@ const tests = {
     // Regression test.
     {
       code: normalizeIndent`
-        function Example(props) {
+        function useExample(props) {
           useEffect(() => {
             let topHeight = 0;
             topHeight = props?.upperViewHeight;
@@ -1197,7 +1188,7 @@ const tests = {
     // Regression test.
     {
       code: normalizeIndent`
-        function Example(props) {
+        function useExample(props) {
           useEffect(() => {
             let topHeight = 0;
             topHeight = props?.upperViewHeight;
@@ -1250,14 +1241,14 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent({foo}) {
+        function useMyComponent({foo}) {
           return useMemo(() => foo, [foo])
         }
       `,
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const foo = true ? "fine" : "also fine";
           return useMemo(() => foo, [foo]);
         }
@@ -1265,7 +1256,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           useEffect(() => {
             console.log('banana banana banana');
           }, undefined);
@@ -1275,7 +1266,7 @@ const tests = {
     {
       // Test settings-based additionalHooks - should work with settings
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useCustomEffect(() => {
             console.log(props.foo);
           });
@@ -1286,7 +1277,7 @@ const tests = {
     {
       // Test settings-based additionalHooks - should work with dependencies
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useCustomEffect(() => {
             console.log(props.foo);
           }, [props.foo]);
@@ -1297,7 +1288,7 @@ const tests = {
     {
       // Test that rule-level additionalHooks takes precedence over settings
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useCustomEffect(() => {
             console.log(props.foo);
           }, []);
@@ -1309,7 +1300,7 @@ const tests = {
     {
       // Test settings with multiple hooks pattern
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useCustomEffect(() => {
             console.log(props.foo);
           }, [props.foo]);
@@ -1324,7 +1315,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent({ theme }) {
+        function useMyComponent({ theme }) {
           const onStuff = useEffectEvent(() => {
             showNotification(theme);
           });
@@ -1341,7 +1332,7 @@ const tests = {
   invalid: [
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useSpecialEffect(() => {
             console.log(props.foo);
           }, null);
@@ -1360,7 +1351,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [props.foo]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   useSpecialEffect(() => {
                     console.log(props.foo);
                   }, [props.foo]);
@@ -1373,7 +1364,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useCallback(() => {
             console.log(props.foo?.toString());
           }, []);
@@ -1388,7 +1379,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [props.foo]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   useCallback(() => {
                     console.log(props.foo?.toString());
                   }, [props.foo]);
@@ -1400,53 +1391,8 @@ const tests = {
       ],
     },
     {
-      // Affected code should use useActionState instead
       code: normalizeIndent`
-        function ComponentUsingFormState(props) {
-          const [state7, dispatch3] = useFormState();
-          const [state8, dispatch4] = ReactDOM.useFormState();
-          useEffect(() => {
-            dispatch3();
-            dispatch4();
-
-            // dynamic
-            console.log(state7);
-            console.log(state8);
-
-          }, [state7, state8]);
-        }
-      `,
-      errors: [
-        {
-          message:
-            "Rezor Hook useEffect has missing dependencies: 'dispatch3' and 'dispatch4'. " +
-            'Either include them or remove the dependency array.',
-          suggestions: [
-            {
-              desc: 'Update the dependencies array to be: [dispatch3, dispatch4, state7, state8]',
-              output: normalizeIndent`
-                function ComponentUsingFormState(props) {
-                  const [state7, dispatch3] = useFormState();
-                  const [state8, dispatch4] = ReactDOM.useFormState();
-                  useEffect(() => {
-                    dispatch3();
-                    dispatch4();
-
-                    // dynamic
-                    console.log(state7);
-                    console.log(state8);
-
-                  }, [dispatch3, dispatch4, state7, state8]);
-                }
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useCallback(() => {
             console.log(props.foo?.bar.baz);
           }, []);
@@ -1461,7 +1407,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [props.foo?.bar.baz]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   useCallback(() => {
                     console.log(props.foo?.bar.baz);
                   }, [props.foo?.bar.baz]);
@@ -1474,7 +1420,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useCallback(() => {
             console.log(props.foo?.bar?.baz);
           }, []);
@@ -1489,7 +1435,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [props.foo?.bar?.baz]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   useCallback(() => {
                     console.log(props.foo?.bar?.baz);
                   }, [props.foo?.bar?.baz]);
@@ -1502,7 +1448,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useCallback(() => {
             console.log(props.foo?.bar.toString());
           }, []);
@@ -1517,7 +1463,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [props.foo?.bar]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   useCallback(() => {
                     console.log(props.foo?.bar.toString());
                   }, [props.foo?.bar]);
@@ -1530,7 +1476,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local = someFunc();
           useEffect(() => {
             console.log(local);
@@ -1546,7 +1492,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [local]',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   const local = someFunc();
                   useEffect(() => {
                     console.log(local);
@@ -1560,7 +1506,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Counter(unstableProp) {
+        function useCounter(unstableProp) {
           let [count, setCount] = useState(0);
           setCount = unstableProp
           useEffect(() => {
@@ -1570,7 +1516,7 @@ const tests = {
             return () => clearInterval(id);
           }, []);
 
-          return <h1>{count}</h1>;
+          return { count };
         }
       `,
       errors: [
@@ -1582,7 +1528,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [setCount]',
               output: normalizeIndent`
-                function Counter(unstableProp) {
+                function useCounter(unstableProp) {
                   let [count, setCount] = useState(0);
                   setCount = unstableProp
                   useEffect(() => {
@@ -1592,7 +1538,7 @@ const tests = {
                     return () => clearInterval(id);
                   }, [setCount]);
 
-                  return <h1>{count}</h1>;
+                  return { count };
                 }
               `,
             },
@@ -1605,7 +1551,7 @@ const tests = {
       // even though it's not a constant -- but we currently don't.
       // So this is an error.
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           let local = 42;
           useEffect(() => {
             console.log(local);
@@ -1621,7 +1567,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [local]',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   let local = 42;
                   useEffect(() => {
                     console.log(local);
@@ -1636,7 +1582,7 @@ const tests = {
     {
       // Regexes are literals but potentially stateful.
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local = /foo/;
           useEffect(() => {
             console.log(local);
@@ -1652,7 +1598,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [local]',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   const local = /foo/;
                   useEffect(() => {
                     console.log(local);
@@ -1667,7 +1613,7 @@ const tests = {
     {
       // Invalid because they don't have a meaning without deps.
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           const value = useMemo(() => { return 2*2; });
           const fn = useCallback(() => { alert('foo'); });
         }
@@ -1691,7 +1637,7 @@ const tests = {
     {
       // Invalid because they don't have a meaning without deps.
       code: normalizeIndent`
-        function MyComponent({ fn1, fn2 }) {
+        function useMyComponent({ fn1, fn2 }) {
           const value = useMemo(fn1);
           const fn = useCallback(fn2);
         }
@@ -1714,7 +1660,7 @@ const tests = {
     {
       // Regression test
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local = someFunc();
           useEffect(() => {
             if (true) {
@@ -1732,7 +1678,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [local]',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   const local = someFunc();
                   useEffect(() => {
                     if (true) {
@@ -1749,7 +1695,7 @@ const tests = {
     {
       // Regression test
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local = {};
           useEffect(() => {
             try {
@@ -1767,7 +1713,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [local]',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   const local = {};
                   useEffect(() => {
                     try {
@@ -1784,7 +1730,7 @@ const tests = {
     {
       // Regression test
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local = {};
           useEffect(() => {
             function inner() {
@@ -1803,7 +1749,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [local]',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   const local = {};
                   useEffect(() => {
                     function inner() {
@@ -1820,7 +1766,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local1 = someFunc();
           {
             const local2 = someFunc();
@@ -1840,7 +1786,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [local1, local2]',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   const local1 = someFunc();
                   {
                     const local2 = someFunc();
@@ -1858,7 +1804,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local1 = {};
           const local2 = {};
           useEffect(() => {
@@ -1876,7 +1822,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [local1, local2]',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   const local1 = {};
                   const local2 = {};
                   useEffect(() => {
@@ -1892,7 +1838,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local1 = {};
           const local2 = {};
           useMemo(() => {
@@ -1909,7 +1855,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [local1]',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   const local1 = {};
                   const local2 = {};
                   useMemo(() => {
@@ -1924,9 +1870,9 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local1 = someFunc();
-          function MyNestedComponent() {
+          function useMyNestedComponent() {
             const local2 = {};
             useCallback(() => {
               console.log(local1);
@@ -1946,9 +1892,9 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [local2]',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   const local1 = someFunc();
-                  function MyNestedComponent() {
+                  function useMyNestedComponent() {
                     const local2 = {};
                     useCallback(() => {
                       console.log(local1);
@@ -1964,7 +1910,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local = {};
           useEffect(() => {
             console.log(local);
@@ -1981,7 +1927,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [local]',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   const local = {};
                   useEffect(() => {
                     console.log(local);
@@ -1996,7 +1942,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local = {};
           useEffect(() => {
             console.log(local);
@@ -2013,7 +1959,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [local]',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   const local = {};
                   useEffect(() => {
                     console.log(local);
@@ -2028,7 +1974,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           useCallback(() => {}, [window]);
         }
       `,
@@ -2043,7 +1989,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: []',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   useCallback(() => {}, []);
                 }
               `,
@@ -2056,7 +2002,7 @@ const tests = {
       // It is not valid for useCallback to specify extraneous deps
       // because it doesn't serve as a side effect trigger unlike useEffect.
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           let local = props.foo;
           useCallback(() => {}, [local]);
         }
@@ -2070,7 +2016,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: []',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   let local = props.foo;
                   useCallback(() => {}, []);
                 }
@@ -2082,7 +2028,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent({ history }) {
+        function useMyComponent({ history }) {
           useEffect(() => {
             return history.listen();
           }, []);
@@ -2097,7 +2043,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [history]',
               output: normalizeIndent`
-                function MyComponent({ history }) {
+                function useMyComponent({ history }) {
                   useEffect(() => {
                     return history.listen();
                   }, [history]);
@@ -2110,7 +2056,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent({ history }) {
+        function useMyComponent({ history }) {
           useEffect(() => {
             return [
               history.foo.bar[2].dobedo.listen(),
@@ -2128,7 +2074,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [history.foo]',
               output: normalizeIndent`
-                function MyComponent({ history }) {
+                function useMyComponent({ history }) {
                   useEffect(() => {
                     return [
                       history.foo.bar[2].dobedo.listen(),
@@ -2144,7 +2090,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent({ history }) {
+        function useMyComponent({ history }) {
           useEffect(() => {
             return [
               history?.foo
@@ -2161,7 +2107,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [history?.foo]',
               output: normalizeIndent`
-                function MyComponent({ history }) {
+                function useMyComponent({ history }) {
                   useEffect(() => {
                     return [
                       history?.foo
@@ -2176,7 +2122,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           useEffect(() => {}, ['foo']);
         }
       `,
@@ -2193,7 +2139,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent({ foo, bar, baz }) {
+        function useMyComponent({ foo, bar, baz }) {
           useEffect(() => {
             console.log(foo, bar, baz);
           }, ['foo', 'bar']);
@@ -2208,7 +2154,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [bar, baz, foo]',
               output: normalizeIndent`
-                function MyComponent({ foo, bar, baz }) {
+                function useMyComponent({ foo, bar, baz }) {
                   useEffect(() => {
                     console.log(foo, bar, baz);
                   }, [bar, baz, foo]);
@@ -2233,7 +2179,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent({ foo, bar, baz }) {
+        function useMyComponent({ foo, bar, baz }) {
           useEffect(() => {
             console.log(foo, bar, baz);
           }, [42, false, null]);
@@ -2248,7 +2194,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [bar, baz, foo]',
               output: normalizeIndent`
-                function MyComponent({ foo, bar, baz }) {
+                function useMyComponent({ foo, bar, baz }) {
                   useEffect(() => {
                     console.log(foo, bar, baz);
                   }, [bar, baz, foo]);
@@ -2276,7 +2222,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const dependencies = [];
           useEffect(() => {}, dependencies);
         }
@@ -2293,7 +2239,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local = {};
           const dependencies = [local];
           useEffect(() => {
@@ -2318,7 +2264,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [local]',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   const local = {};
                   const dependencies = [local];
                   useEffect(() => {
@@ -2333,7 +2279,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local = {};
           const dependencies = [local];
           useEffect(() => {
@@ -2350,7 +2296,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [local]',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   const local = {};
                   const dependencies = [local];
                   useEffect(() => {
@@ -2373,7 +2319,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local = someFunc();
           useEffect(() => {
             console.log(local);
@@ -2392,7 +2338,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local = {};
           useEffect(() => {
             console.log(local);
@@ -2410,7 +2356,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [local]',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   const local = {};
                   useEffect(() => {
                     console.log(local);
@@ -2430,7 +2376,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useEffect(() => {
             console.log(props.items[0]);
           }, [props.items[0]]);
@@ -2445,7 +2391,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [props.items]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   useEffect(() => {
                     console.log(props.items[0]);
                   }, [props.items]);
@@ -2464,7 +2410,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useEffect(() => {
             console.log(props.items[0]);
           }, [props.items, props.items[0]]);
@@ -2482,7 +2428,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent({ items }) {
+        function useMyComponent({ items }) {
           useEffect(() => {
             console.log(items[0]);
           }, [items[0]]);
@@ -2497,7 +2443,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [items]',
               output: normalizeIndent`
-                function MyComponent({ items }) {
+                function useMyComponent({ items }) {
                   useEffect(() => {
                     console.log(items[0]);
                   }, [items]);
@@ -2516,7 +2462,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent({ items }) {
+        function useMyComponent({ items }) {
           useEffect(() => {
             console.log(items[0]);
           }, [items, items[0]]);
@@ -2539,7 +2485,7 @@ const tests = {
       // So while [props, props.foo] is unnecessary, 'props' wins here as the
       // broader one, and this is why 'props.foo' is reported as unnecessary.
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           const local = {};
           useCallback(() => {
             console.log(props.foo);
@@ -2556,7 +2502,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [props]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   const local = {};
                   useCallback(() => {
                     console.log(props.foo);
@@ -2572,7 +2518,7 @@ const tests = {
     {
       // Since we don't have 'props' in the list, we'll suggest narrow dependencies.
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           const local = {};
           useCallback(() => {
             console.log(props.foo);
@@ -2589,7 +2535,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [props.bar, props.foo]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   const local = {};
                   useCallback(() => {
                     console.log(props.foo);
@@ -2606,7 +2552,7 @@ const tests = {
       // Effects are allowed to over-specify deps. We'll complain about missing
       // 'local', but we won't remove the already-specified 'local.id' from your list.
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local = {id: 42};
           useEffect(() => {
             console.log(local);
@@ -2622,7 +2568,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [local, local.id]',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   const local = {id: 42};
                   useEffect(() => {
                     console.log(local);
@@ -2638,7 +2584,7 @@ const tests = {
       // Callbacks are not allowed to over-specify deps. So we'll complain about missing
       // 'local' and we will also *remove* 'local.id' from your list.
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local = {id: 42};
           const fn = useCallback(() => {
             console.log(local);
@@ -2654,7 +2600,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [local]',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   const local = {id: 42};
                   const fn = useCallback(() => {
                     console.log(local);
@@ -2670,7 +2616,7 @@ const tests = {
       // Callbacks are not allowed to over-specify deps. So we'll complain about
       // the unnecessary 'local.id'.
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local = {id: 42};
           const fn = useCallback(() => {
             console.log(local);
@@ -2686,7 +2632,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [local]',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   const local = {id: 42};
                   const fn = useCallback(() => {
                     console.log(local);
@@ -2700,7 +2646,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           const fn = useCallback(() => {
             console.log(props.foo.bar.baz);
           }, []);
@@ -2715,7 +2661,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [props.foo.bar.baz]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   const fn = useCallback(() => {
                     console.log(props.foo.bar.baz);
                   }, [props.foo.bar.baz]);
@@ -2728,7 +2674,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           let color = {}
           const fn = useCallback(() => {
             console.log(props.foo.bar.baz);
@@ -2745,7 +2691,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [color, props.foo.bar.baz]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   let color = {}
                   const fn = useCallback(() => {
                     console.log(props.foo.bar.baz);
@@ -2765,7 +2711,7 @@ const tests = {
       // already covers it, and having both is unnecessary.
       // TODO: maybe consider suggesting a narrower one by default in these cases.
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           const fn = useCallback(() => {
             console.log(props.foo.bar.baz);
           }, [props.foo.bar.baz, props.foo]);
@@ -2780,7 +2726,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [props.foo]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   const fn = useCallback(() => {
                     console.log(props.foo.bar.baz);
                   }, [props.foo]);
@@ -2793,7 +2739,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           const fn = useCallback(() => {
             console.log(props.foo.bar.baz);
             console.log(props.foo.fizz.bizz);
@@ -2809,7 +2755,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [props.foo.bar.baz, props.foo.fizz.bizz]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   const fn = useCallback(() => {
                     console.log(props.foo.bar.baz);
                     console.log(props.foo.fizz.bizz);
@@ -2829,7 +2775,7 @@ const tests = {
       // from scratch. This will set the user on a better path by default.
       // This is why we end up with just 'props.foo.bar', and not them both.
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           const fn = useCallback(() => {
             console.log(props.foo.bar);
           }, [props.foo.bar.baz]);
@@ -2844,7 +2790,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [props.foo.bar]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   const fn = useCallback(() => {
                     console.log(props.foo.bar);
                   }, [props.foo.bar]);
@@ -2857,7 +2803,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           const fn = useCallback(() => {
             console.log(props);
             console.log(props.hello);
@@ -2873,7 +2819,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [props]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   const fn = useCallback(() => {
                     console.log(props);
                     console.log(props.hello);
@@ -2887,7 +2833,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local = {};
           useEffect(() => {
             console.log(local);
@@ -2903,7 +2849,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [local]',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   const local = {};
                   useEffect(() => {
                     console.log(local);
@@ -2917,7 +2863,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local1 = {};
           useCallback(() => {
             const local1 = {};
@@ -2934,7 +2880,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: []',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   const local1 = {};
                   useCallback(() => {
                     const local1 = {};
@@ -2949,7 +2895,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local1 = {};
           useCallback(() => {}, [local1]);
         }
@@ -2963,7 +2909,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: []',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   const local1 = {};
                   useCallback(() => {}, []);
                 }
@@ -2975,7 +2921,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useEffect(() => {
             console.log(props.foo);
           }, []);
@@ -2990,7 +2936,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [props.foo]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   useEffect(() => {
                     console.log(props.foo);
                   }, [props.foo]);
@@ -3003,7 +2949,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useEffect(() => {
             console.log(props.foo);
             console.log(props.bar);
@@ -3019,7 +2965,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [props.bar, props.foo]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   useEffect(() => {
                     console.log(props.foo);
                     console.log(props.bar);
@@ -3033,7 +2979,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           let a, b, c, d, e, f, g;
           useEffect(() => {
             console.log(b, e, d, c, a, g, f);
@@ -3050,7 +2996,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [c, a, g, b, e, d, f]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   let a, b, c, d, e, f, g;
                   useEffect(() => {
                     console.log(b, e, d, c, a, g, f);
@@ -3064,7 +3010,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           let a, b, c, d, e, f, g;
           useEffect(() => {
             console.log(b, e, d, c, a, g, f);
@@ -3081,7 +3027,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [a, b, c, d, e, f, g]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   let a, b, c, d, e, f, g;
                   useEffect(() => {
                     console.log(b, e, d, c, a, g, f);
@@ -3095,7 +3041,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           let a, b, c, d, e, f, g;
           useEffect(() => {
             console.log(b, e, d, c, a, g, f);
@@ -3112,7 +3058,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [a, b, c, d, e, f, g]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   let a, b, c, d, e, f, g;
                   useEffect(() => {
                     console.log(b, e, d, c, a, g, f);
@@ -3126,7 +3072,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           const local = {};
           useEffect(() => {
             console.log(props.foo);
@@ -3144,7 +3090,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [local, props.bar, props.foo]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   const local = {};
                   useEffect(() => {
                     console.log(props.foo);
@@ -3160,7 +3106,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           const local = {};
           useEffect(() => {
             console.log(props.foo);
@@ -3178,7 +3124,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [local, props]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   const local = {};
                   useEffect(() => {
                     console.log(props.foo);
@@ -3194,7 +3140,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useEffect(() => {
             console.log(props.foo);
           }, []);
@@ -3227,7 +3173,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [props.foo]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   useEffect(() => {
                     console.log(props.foo);
                   }, [props.foo]);
@@ -3262,7 +3208,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [props.foo]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   useEffect(() => {
                     console.log(props.foo);
                   }, []);
@@ -3297,7 +3243,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [props.foo]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   useEffect(() => {
                     console.log(props.foo);
                   }, []);
@@ -3332,7 +3278,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [props.foo]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   useEffect(() => {
                     console.log(props.foo);
                   }, []);
@@ -3367,7 +3313,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [props.foo]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   useEffect(() => {
                     console.log(props.foo);
                   }, []);
@@ -3402,7 +3348,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [props.foo]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   useEffect(() => {
                     console.log(props.foo);
                   }, []);
@@ -3434,7 +3380,7 @@ const tests = {
     {
       // Test settings-based additionalHooks - should detect missing dependency
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useCustomEffect(() => {
             console.log(props.foo);
           }, []);
@@ -3450,7 +3396,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [props.foo]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   useCustomEffect(() => {
                     console.log(props.foo);
                   }, [props.foo]);
@@ -3463,7 +3409,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local = {};
           useEffect(() => {
             console.log(local);
@@ -3480,7 +3426,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [local]',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   const local = {};
                   useEffect(() => {
                     console.log(local);
@@ -3500,7 +3446,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local = {};
           useEffect(() => {
             console.log(local);
@@ -3517,7 +3463,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [local]',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   const local = {};
                   useEffect(() => {
                     console.log(local);
@@ -3537,7 +3483,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useEffect(() => {}, [props?.attribute.method()]);
         }
       `,
@@ -3552,7 +3498,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useEffect(() => {}, [props.method()]);
         }
       `,
@@ -3567,7 +3513,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const ref = useRef();
           const [state, setState] = useState();
           useEffect(() => {
@@ -3587,7 +3533,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [state]',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   const ref = useRef();
                   const [state, setState] = useState();
                   useEffect(() => {
@@ -3603,7 +3549,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const ref = useRef();
           const [state, setState] = useState();
           useEffect(() => {
@@ -3626,7 +3572,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [ref, state]',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   const ref = useRef();
                   const [state, setState] = useState();
                   useEffect(() => {
@@ -3642,7 +3588,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           const ref1 = useRef();
           const ref2 = useRef();
           useEffect(() => {
@@ -3662,7 +3608,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [props.color, props.someOtherRefs]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   const ref1 = useRef();
                   const ref2 = useRef();
                   useEffect(() => {
@@ -3680,7 +3626,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           const ref1 = useRef();
           const ref2 = useRef();
           useEffect(() => {
@@ -3702,7 +3648,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [props.someOtherRefs, props.color]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   const ref1 = useRef();
                   const ref2 = useRef();
                   useEffect(() => {
@@ -3720,7 +3666,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           const ref1 = useRef();
           const ref2 = useRef();
           useEffect(() => {
@@ -3742,7 +3688,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [props.someOtherRefs, props.color]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   const ref1 = useRef();
                   const ref2 = useRef();
                   useEffect(() => {
@@ -3760,7 +3706,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const ref = useRef();
           useEffect(() => {
             console.log(ref.current);
@@ -3778,7 +3724,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: []',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   const ref = useRef();
                   useEffect(() => {
                     console.log(ref.current);
@@ -3792,7 +3738,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent({ activeTab }) {
+        function useMyComponent({ activeTab }) {
           const ref1 = useRef();
           const ref2 = useRef();
           useEffect(() => {
@@ -3812,7 +3758,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [activeTab]',
               output: normalizeIndent`
-                function MyComponent({ activeTab }) {
+                function useMyComponent({ activeTab }) {
                   const ref1 = useRef();
                   const ref2 = useRef();
                   useEffect(() => {
@@ -3828,7 +3774,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent({ activeTab, initY }) {
+        function useMyComponent({ activeTab, initY }) {
           const ref1 = useRef();
           const ref2 = useRef();
           const fn = useCallback(() => {
@@ -3848,7 +3794,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [initY]',
               output: normalizeIndent`
-                function MyComponent({ activeTab, initY }) {
+                function useMyComponent({ activeTab, initY }) {
                   const ref1 = useRef();
                   const ref2 = useRef();
                   const fn = useCallback(() => {
@@ -3864,7 +3810,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const ref = useRef();
           useEffect(() => {
             console.log(ref.current);
@@ -3882,7 +3828,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [ref]',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   const ref = useRef();
                   useEffect(() => {
                     console.log(ref.current);
@@ -3896,7 +3842,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useEffect(() => {
             if (props.onChange) {
               props.onChange();
@@ -3917,7 +3863,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [props]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   useEffect(() => {
                     if (props.onChange) {
                       props.onChange();
@@ -3932,7 +3878,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useEffect(() => {
             if (props?.onChange) {
               props?.onChange();
@@ -3953,7 +3899,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [props]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   useEffect(() => {
                     if (props?.onChange) {
                       props?.onChange();
@@ -3968,7 +3914,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useEffect(() => {
             function play() {
               props.onPlay();
@@ -3992,7 +3938,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [props]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   useEffect(() => {
                     function play() {
                       props.onPlay();
@@ -4010,7 +3956,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useEffect(() => {
             if (props.foo.onChange) {
               props.foo.onChange();
@@ -4027,7 +3973,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [props.foo]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   useEffect(() => {
                     if (props.foo.onChange) {
                       props.foo.onChange();
@@ -4042,7 +3988,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useEffect(() => {
             props.onChange();
             if (props.foo.onChange) {
@@ -4064,7 +4010,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [props]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   useEffect(() => {
                     props.onChange();
                     if (props.foo.onChange) {
@@ -4080,7 +4026,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           const [skillsCount] = useState();
           useEffect(() => {
             if (skillsCount === 0 && !props.isEditMode) {
@@ -4102,7 +4048,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [skillsCount, props.isEditMode, props.toggleEditMode, props]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   const [skillsCount] = useState();
                   useEffect(() => {
                     if (skillsCount === 0 && !props.isEditMode) {
@@ -4118,7 +4064,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           const [skillsCount] = useState();
           useEffect(() => {
             if (skillsCount === 0 && !props.isEditMode) {
@@ -4140,7 +4086,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [props, skillsCount]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   const [skillsCount] = useState();
                   useEffect(() => {
                     if (skillsCount === 0 && !props.isEditMode) {
@@ -4156,7 +4102,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useEffect(() => {
             externalCall(props);
             props.onChange();
@@ -4173,7 +4119,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [props]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   useEffect(() => {
                     externalCall(props);
                     props.onChange();
@@ -4187,7 +4133,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useEffect(() => {
             props.onChange();
             externalCall(props);
@@ -4204,7 +4150,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [props]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   useEffect(() => {
                     props.onChange();
                     externalCall(props);
@@ -4218,7 +4164,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           let value;
           let value2;
           let value3;
@@ -4283,7 +4229,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           let value;
           let value2;
           let value3;
@@ -4336,7 +4282,7 @@ const tests = {
     {
       // Autofix ignores constant primitives (leaving the ones that are there).
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local1 = 42;
           const local2 = '42';
           const local3 = null;
@@ -4358,7 +4304,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [local1, local3, local4]',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   const local1 = 42;
                   const local2 = '42';
                   const local3 = null;
@@ -4378,7 +4324,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           useEffect(() => {
             window.scrollTo(0, 0);
           }, [window]);
@@ -4395,7 +4341,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: []',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   useEffect(() => {
                     window.scrollTo(0, 0);
                   }, []);
@@ -4410,7 +4356,7 @@ const tests = {
       code: normalizeIndent`
         import MutableStore from 'store';
 
-        function MyComponent() {
+        function useMyComponent() {
           useEffect(() => {
             console.log(MutableStore.hello);
           }, [MutableStore.hello]);
@@ -4429,7 +4375,7 @@ const tests = {
               output: normalizeIndent`
                 import MutableStore from 'store';
 
-                function MyComponent() {
+                function useMyComponent() {
                   useEffect(() => {
                     console.log(MutableStore.hello);
                   }, []);
@@ -4445,7 +4391,7 @@ const tests = {
         import MutableStore from 'store';
         let z = {};
 
-        function MyComponent(props) {
+        function useMyComponent(props) {
           let x = props.foo;
           {
             let y = props.bar;
@@ -4470,7 +4416,7 @@ const tests = {
                 import MutableStore from 'store';
                 let z = {};
 
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   let x = props.foo;
                   {
                     let y = props.bar;
@@ -4490,7 +4436,7 @@ const tests = {
         import MutableStore from 'store';
         let z = {};
 
-        function MyComponent(props) {
+        function useMyComponent(props) {
           let x = props.foo;
           {
             let y = props.bar;
@@ -4517,7 +4463,7 @@ const tests = {
                 import MutableStore from 'store';
                 let z = {};
 
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   let x = props.foo;
                   {
                     let y = props.bar;
@@ -4537,7 +4483,7 @@ const tests = {
         import MutableStore from 'store';
         let z = {};
 
-        function MyComponent(props) {
+        function useMyComponent(props) {
           let x = props.foo;
           {
             let y = props.bar;
@@ -4562,7 +4508,7 @@ const tests = {
                 import MutableStore from 'store';
                 let z = {};
 
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   let x = props.foo;
                   {
                     let y = props.bar;
@@ -4582,7 +4528,7 @@ const tests = {
         import MutableStore from 'store';
         let z = {};
 
-        function MyComponent(props) {
+        function useMyComponent(props) {
           let x = props.foo;
           {
             let y = props.bar;
@@ -4607,7 +4553,7 @@ const tests = {
                 import MutableStore from 'store';
                 let z = {};
 
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   let x = props.foo;
                   {
                     let y = props.bar;
@@ -4624,7 +4570,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           let [, setState] = useState();
 
           function handleNext(value) {
@@ -4653,7 +4599,7 @@ const tests = {
       // Even if the function only references static values,
       // once you specify it in deps, it will invalidate them.
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           let [, setState] = useState();
 
           const handleNext = (value) => {
@@ -4685,7 +4631,7 @@ const tests = {
       // effect because it is *also* used outside of it.
       // So our suggestion is useCallback().
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           let [, setState] = useState();
 
           const handleNext = (value) => {
@@ -4696,7 +4642,7 @@ const tests = {
             return Store.subscribe(handleNext);
           }, [handleNext]);
 
-          return <div onClick={handleNext} />;
+          return { handleNext };
         }
       `,
       errors: [
@@ -4711,7 +4657,7 @@ const tests = {
             {
               desc: "Wrap the definition of 'handleNext' in its own useCallback() Hook.",
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   let [, setState] = useState();
 
                   const handleNext = useCallback((value) => {
@@ -4722,7 +4668,7 @@ const tests = {
                     return Store.subscribe(handleNext);
                   }, [handleNext]);
 
-                  return <div onClick={handleNext} />;
+                  return { handleNext };
                 }
               `,
             },
@@ -4732,7 +4678,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           const handleNext1 = () => {
             console.log('hello');
           };
@@ -4764,7 +4710,7 @@ const tests = {
             {
               desc: "Wrap the definition of 'handleNext1' in its own useCallback() Hook.",
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   const handleNext1 = useCallback(() => {
                     console.log('hello');
                   });
@@ -4793,7 +4739,7 @@ const tests = {
             {
               desc: "Wrap the definition of 'handleNext1' in its own useCallback() Hook.",
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   const handleNext1 = useCallback(() => {
                     console.log('hello');
                   });
@@ -4831,7 +4777,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           let handleNext = () => {
             console.log('hello');
           };
@@ -4859,7 +4805,7 @@ const tests = {
             {
               desc: "Wrap the definition of 'handleNext' in its own useCallback() Hook.",
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   let handleNext = useCallback(() => {
                     console.log('hello');
                   });
@@ -4880,7 +4826,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           let [, setState] = useState();
           let taint = props.foo;
 
@@ -4908,7 +4854,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Counter() {
+        function useCounter() {
           let [count, setCount] = useState(0);
 
           useEffect(() => {
@@ -4918,7 +4864,7 @@ const tests = {
             return () => clearInterval(id);
           }, []);
 
-          return <h1>{count}</h1>;
+          return { count };
         }
       `,
       errors: [
@@ -4932,7 +4878,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [count]',
               output: normalizeIndent`
-                function Counter() {
+                function useCounter() {
                   let [count, setCount] = useState(0);
 
                   useEffect(() => {
@@ -4942,7 +4888,7 @@ const tests = {
                     return () => clearInterval(id);
                   }, [count]);
 
-                  return <h1>{count}</h1>;
+                  return { count };
                 }
               `,
             },
@@ -4952,7 +4898,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Counter() {
+        function useCounter() {
           let [count, setCount] = useState(0);
           let [increment, setIncrement] = useState(0);
 
@@ -4963,7 +4909,7 @@ const tests = {
             return () => clearInterval(id);
           }, []);
 
-          return <h1>{count}</h1>;
+          return { count };
         }
       `,
       errors: [
@@ -4977,7 +4923,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [count, increment]',
               output: normalizeIndent`
-                function Counter() {
+                function useCounter() {
                   let [count, setCount] = useState(0);
                   let [increment, setIncrement] = useState(0);
 
@@ -4988,7 +4934,7 @@ const tests = {
                     return () => clearInterval(id);
                   }, [count, increment]);
 
-                  return <h1>{count}</h1>;
+                  return { count };
                 }
               `,
             },
@@ -4998,7 +4944,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Counter() {
+        function useCounter() {
           let [count, setCount] = useState(0);
           let [increment, setIncrement] = useState(0);
 
@@ -5009,7 +4955,7 @@ const tests = {
             return () => clearInterval(id);
           }, []);
 
-          return <h1>{count}</h1>;
+          return { count };
         }
       `,
       errors: [
@@ -5023,7 +4969,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [increment]',
               output: normalizeIndent`
-                function Counter() {
+                function useCounter() {
                   let [count, setCount] = useState(0);
                   let [increment, setIncrement] = useState(0);
 
@@ -5034,7 +4980,7 @@ const tests = {
                     return () => clearInterval(id);
                   }, [increment]);
 
-                  return <h1>{count}</h1>;
+                  return { count };
                 }
               `,
             },
@@ -5044,7 +4990,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Counter() {
+        function useCounter() {
           let [count, setCount] = useState(0);
           let increment = useCustomHook();
 
@@ -5055,7 +5001,7 @@ const tests = {
             return () => clearInterval(id);
           }, []);
 
-          return <h1>{count}</h1>;
+          return { count };
         }
       `,
       // This intentionally doesn't show the reducer message
@@ -5070,7 +5016,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [increment]',
               output: normalizeIndent`
-                function Counter() {
+                function useCounter() {
                   let [count, setCount] = useState(0);
                   let increment = useCustomHook();
 
@@ -5081,7 +5027,7 @@ const tests = {
                     return () => clearInterval(id);
                   }, [increment]);
 
-                  return <h1>{count}</h1>;
+                  return { count };
                 }
               `,
             },
@@ -5091,7 +5037,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Counter({ step }) {
+        function useCounter({ step }) {
           let [count, setCount] = useState(0);
 
           function increment(x) {
@@ -5105,7 +5051,7 @@ const tests = {
             return () => clearInterval(id);
           }, []);
 
-          return <h1>{count}</h1>;
+          return { count };
         }
       `,
       // This intentionally doesn't show the reducer message
@@ -5120,7 +5066,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [increment]',
               output: normalizeIndent`
-                function Counter({ step }) {
+                function useCounter({ step }) {
                   let [count, setCount] = useState(0);
 
                   function increment(x) {
@@ -5134,7 +5080,7 @@ const tests = {
                     return () => clearInterval(id);
                   }, [increment]);
 
-                  return <h1>{count}</h1>;
+                  return { count };
                 }
               `,
             },
@@ -5144,7 +5090,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Counter({ step }) {
+        function useCounter({ step }) {
           let [count, setCount] = useState(0);
 
           function increment(x) {
@@ -5158,7 +5104,7 @@ const tests = {
             return () => clearInterval(id);
           }, [increment]);
 
-          return <h1>{count}</h1>;
+          return { count };
         }
       `,
       errors: [
@@ -5174,7 +5120,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Counter({ increment }) {
+        function useCounter({ increment }) {
           let [count, setCount] = useState(0);
 
           useEffect(() => {
@@ -5184,7 +5130,7 @@ const tests = {
             return () => clearInterval(id);
           }, []);
 
-          return <h1>{count}</h1>;
+          return { count };
         }
       `,
       errors: [
@@ -5198,7 +5144,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [increment]',
               output: normalizeIndent`
-                function Counter({ increment }) {
+                function useCounter({ increment }) {
                   let [count, setCount] = useState(0);
 
                   useEffect(() => {
@@ -5208,7 +5154,7 @@ const tests = {
                     return () => clearInterval(id);
                   }, [increment]);
 
-                  return <h1>{count}</h1>;
+                  return { count };
                 }
               `,
             },
@@ -5218,7 +5164,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Counter() {
+        function useCounter() {
           const [count, setCount] = useState(0);
 
           function tick() {
@@ -5232,7 +5178,7 @@ const tests = {
             return () => clearInterval(id);
           }, []);
 
-          return <h1>{count}</h1>;
+          return { count };
         }
       `,
       // TODO: ideally this should suggest useState updater form
@@ -5248,7 +5194,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [tick]',
               output: normalizeIndent`
-                function Counter() {
+                function useCounter() {
                   const [count, setCount] = useState(0);
 
                   function tick() {
@@ -5262,7 +5208,7 @@ const tests = {
                     return () => clearInterval(id);
                   }, [tick]);
 
-                  return <h1>{count}</h1>;
+                  return { count };
                 }
               `,
             },
@@ -5273,7 +5219,7 @@ const tests = {
     {
       // Regression test for a crash
       code: normalizeIndent`
-        function Podcasts() {
+        function usePodcasts() {
           useEffect(() => {
             alert(podcasts);
           }, []);
@@ -5292,7 +5238,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [podcasts]',
               output: normalizeIndent`
-                function Podcasts() {
+                function usePodcasts() {
                   useEffect(() => {
                     alert(podcasts);
                   }, [podcasts]);
@@ -5306,7 +5252,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Podcasts({ fetchPodcasts, id }) {
+        function usePodcasts({ fetchPodcasts, id }) {
           let [podcasts, setPodcasts] = useState(null);
           useEffect(() => {
             fetchPodcasts(id).then(setPodcasts);
@@ -5324,7 +5270,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [fetchPodcasts, id]',
               output: normalizeIndent`
-                function Podcasts({ fetchPodcasts, id }) {
+                function usePodcasts({ fetchPodcasts, id }) {
                   let [podcasts, setPodcasts] = useState(null);
                   useEffect(() => {
                     fetchPodcasts(id).then(setPodcasts);
@@ -5338,7 +5284,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Podcasts({ api: { fetchPodcasts }, id }) {
+        function usePodcasts({ api: { fetchPodcasts }, id }) {
           let [podcasts, setPodcasts] = useState(null);
           useEffect(() => {
             fetchPodcasts(id).then(setPodcasts);
@@ -5356,7 +5302,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [fetchPodcasts, id]',
               output: normalizeIndent`
-                function Podcasts({ api: { fetchPodcasts }, id }) {
+                function usePodcasts({ api: { fetchPodcasts }, id }) {
                   let [podcasts, setPodcasts] = useState(null);
                   useEffect(() => {
                     fetchPodcasts(id).then(setPodcasts);
@@ -5370,7 +5316,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Podcasts({ fetchPodcasts, fetchPodcasts2, id }) {
+        function usePodcasts({ fetchPodcasts, fetchPodcasts2, id }) {
           let [podcasts, setPodcasts] = useState(null);
           useEffect(() => {
             setTimeout(() => {
@@ -5392,7 +5338,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [fetchPodcasts, fetchPodcasts2, id]',
               output: normalizeIndent`
-                function Podcasts({ fetchPodcasts, fetchPodcasts2, id }) {
+                function usePodcasts({ fetchPodcasts, fetchPodcasts2, id }) {
                   let [podcasts, setPodcasts] = useState(null);
                   useEffect(() => {
                     setTimeout(() => {
@@ -5410,7 +5356,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Podcasts({ fetchPodcasts, id }) {
+        function usePodcasts({ fetchPodcasts, id }) {
           let [podcasts, setPodcasts] = useState(null);
           useEffect(() => {
             console.log(fetchPodcasts);
@@ -5429,7 +5375,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [fetchPodcasts, id]',
               output: normalizeIndent`
-                function Podcasts({ fetchPodcasts, id }) {
+                function usePodcasts({ fetchPodcasts, id }) {
                   let [podcasts, setPodcasts] = useState(null);
                   useEffect(() => {
                     console.log(fetchPodcasts);
@@ -5444,7 +5390,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Podcasts({ fetchPodcasts, id }) {
+        function usePodcasts({ fetchPodcasts, id }) {
           let [podcasts, setPodcasts] = useState(null);
           useEffect(() => {
             console.log(fetchPodcasts);
@@ -5463,7 +5409,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [fetchPodcasts, id]',
               output: normalizeIndent`
-                function Podcasts({ fetchPodcasts, id }) {
+                function usePodcasts({ fetchPodcasts, id }) {
                   let [podcasts, setPodcasts] = useState(null);
                   useEffect(() => {
                     console.log(fetchPodcasts);
@@ -5480,7 +5426,7 @@ const tests = {
       // The mistake here is that it was moved inside the effect
       // so it can't be referenced in the deps array.
       code: normalizeIndent`
-        function Thing() {
+        function useThing() {
           useEffect(() => {
             const fetchData = async () => {};
             fetchData();
@@ -5496,7 +5442,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: []',
               output: normalizeIndent`
-                function Thing() {
+                function useThing() {
                   useEffect(() => {
                     const fetchData = async () => {};
                     fetchData();
@@ -5510,7 +5456,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Hello() {
+        function useHello() {
           const [state, setState] = useState(0);
           useEffect(() => {
             setState({});
@@ -5527,7 +5473,7 @@ const tests = {
             {
               desc: 'Add dependencies array: []',
               output: normalizeIndent`
-                function Hello() {
+                function useHello() {
                   const [state, setState] = useState(0);
                   useEffect(() => {
                     setState({});
@@ -5541,7 +5487,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Hello() {
+        function useHello() {
           const [data, setData] = useState(0);
           useEffect(() => {
             fetchData.then(setData);
@@ -5558,7 +5504,7 @@ const tests = {
             {
               desc: 'Add dependencies array: []',
               output: normalizeIndent`
-                function Hello() {
+                function useHello() {
                   const [data, setData] = useState(0);
                   useEffect(() => {
                     fetchData.then(setData);
@@ -5572,7 +5518,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Hello({ country }) {
+        function useHello({ country }) {
           const [data, setData] = useState(0);
           useEffect(() => {
             fetchData(country).then(setData);
@@ -5589,7 +5535,7 @@ const tests = {
             {
               desc: 'Add dependencies array: [country]',
               output: normalizeIndent`
-                function Hello({ country }) {
+                function useHello({ country }) {
                   const [data, setData] = useState(0);
                   useEffect(() => {
                     fetchData(country).then(setData);
@@ -5603,7 +5549,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Hello({ prop1, prop2 }) {
+        function useHello({ prop1, prop2 }) {
           const [state, setState] = useState(0);
           useEffect(() => {
             if (prop1) {
@@ -5622,7 +5568,7 @@ const tests = {
             {
               desc: 'Add dependencies array: [prop1, prop2]',
               output: normalizeIndent`
-                function Hello({ prop1, prop2 }) {
+                function useHello({ prop1, prop2 }) {
                   const [state, setState] = useState(0);
                   useEffect(() => {
                     if (prop1) {
@@ -5638,7 +5584,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Thing() {
+        function useThing() {
           useEffect(async () => {}, []);
         }
       `,
@@ -5661,7 +5607,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Thing() {
+        function useThing() {
           useEffect(async () => {});
         }
       `,
@@ -5684,7 +5630,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Example() {
+        function useExample() {
           const foo = useCallback(() => {
             foo();
           }, [foo]);
@@ -5699,7 +5645,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: []',
               output: normalizeIndent`
-                function Example() {
+                function useExample() {
                   const foo = useCallback(() => {
                     foo();
                   }, []);
@@ -5712,7 +5658,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Example({ prop }) {
+        function useExample({ prop }) {
           const foo = useCallback(() => {
             prop.hello(foo);
           }, [foo]);
@@ -5730,7 +5676,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [prop]',
               output: normalizeIndent`
-                function Example({ prop }) {
+                function useExample({ prop }) {
                   const foo = useCallback(() => {
                     prop.hello(foo);
                   }, [prop]);
@@ -5746,7 +5692,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local = {};
           function myEffect() {
             console.log(local);
@@ -5763,7 +5709,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [local]',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   const local = {};
                   function myEffect() {
                     console.log(local);
@@ -5778,7 +5724,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local = {};
           const myEffect = () => {
             console.log(local);
@@ -5795,7 +5741,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [local]',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   const local = {};
                   const myEffect = () => {
                     console.log(local);
@@ -5810,7 +5756,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local = {};
           const myEffect = function() {
             console.log(local);
@@ -5827,7 +5773,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [local]',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   const local = {};
                   const myEffect = function() {
                     console.log(local);
@@ -5842,7 +5788,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local = {};
           const myEffect = () => {
             otherThing();
@@ -5862,7 +5808,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [otherThing]',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   const local = {};
                   const myEffect = () => {
                     otherThing();
@@ -5880,7 +5826,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local = {};
           const myEffect = debounce(() => {
             console.log(local);
@@ -5897,7 +5843,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [myEffect]',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   const local = {};
                   const myEffect = debounce(() => {
                     console.log(local);
@@ -5912,7 +5858,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local = {};
           const myEffect = debounce(() => {
             console.log(local);
@@ -5929,7 +5875,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [myEffect]',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   const local = {};
                   const myEffect = debounce(() => {
                     console.log(local);
@@ -5944,7 +5890,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent({myEffect}) {
+        function useMyComponent({myEffect}) {
           useEffect(myEffect, []);
         }
       `,
@@ -5957,7 +5903,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local = {};
           useEffect(debounce(() => {
             console.log(local);
@@ -5975,7 +5921,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           let foo = {}
           useEffect(() => {
             foo.bar.baz = 43;
@@ -5992,7 +5938,7 @@ const tests = {
             {
               desc: 'Update the dependencies array to be: [foo.bar, props.foo.bar]',
               output: normalizeIndent`
-                function MyComponent(props) {
+                function useMyComponent(props) {
                   let foo = {}
                   useEffect(() => {
                     foo.bar.baz = 43;
@@ -6007,7 +5953,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Component() {
+        function useComponent() {
           const foo = {};
           useMemo(() => foo, [foo]);
         }
@@ -6024,7 +5970,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Component() {
+        function useComponent() {
           const foo = [];
           useMemo(() => foo, [foo]);
         }
@@ -6041,7 +5987,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Component() {
+        function useComponent() {
           const foo = () => {};
           useMemo(() => foo, [foo]);
         }
@@ -6058,7 +6004,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Component() {
+        function useComponent() {
           const foo = function bar(){};
           useMemo(() => foo, [foo]);
         }
@@ -6075,7 +6021,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Component() {
+        function useComponent() {
           const foo = class {};
           useMemo(() => foo, [foo]);
         }
@@ -6092,7 +6038,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Component() {
+        function useComponent() {
           const foo = true ? {} : "fine";
           useMemo(() => foo, [foo]);
         }
@@ -6109,7 +6055,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Component() {
+        function useComponent() {
           const foo = bar || {};
           useMemo(() => foo, [foo]);
         }
@@ -6126,7 +6072,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Component() {
+        function useComponent() {
           const foo = bar ?? {};
           useMemo(() => foo, [foo]);
         }
@@ -6143,7 +6089,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Component() {
+        function useComponent() {
           const foo = bar && {};
           useMemo(() => foo, [foo]);
         }
@@ -6160,7 +6106,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Component() {
+        function useComponent() {
           const foo = bar ? baz ? {} : null : null;
           useMemo(() => foo, [foo]);
         }
@@ -6177,7 +6123,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Component() {
+        function useComponent() {
           let foo = {};
           useMemo(() => foo, [foo]);
         }
@@ -6194,7 +6140,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Component() {
+        function useComponent() {
           var foo = {};
           useMemo(() => foo, [foo]);
         }
@@ -6211,7 +6157,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Component() {
+        function useComponent() {
           const foo = {};
           useCallback(() => {
             console.log(foo);
@@ -6230,7 +6176,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Component() {
+        function useComponent() {
           const foo = {};
           useEffect(() => {
             console.log(foo);
@@ -6249,7 +6195,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Foo(section) {
+        function useFoo(section) {
           const foo = section.section_components?.edges ?? [];
           useEffect(() => {
             console.log(foo);
@@ -6268,7 +6214,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Foo(section) {
+        function useFoo(section) {
           const foo = {};
           console.log(foo);
           useMemo(() => {
@@ -6287,7 +6233,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Foo() {
+        function useFoo() {
           const foo = bar = {};
           useMemo(() => {
             console.log(foo);
@@ -6305,7 +6251,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Foo() {
+        function useFoo() {
           const foo = new String('foo'); // Note 'foo' will be boxed, and thus an object and thus compared by reference.
           useMemo(() => {
             console.log(foo);
@@ -6323,7 +6269,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Foo() {
+        function useFoo() {
           const foo = new Map([]);
           useMemo(() => {
             console.log(foo);
@@ -6341,7 +6287,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function Foo() {
+        function useFoo() {
           const foo = /reg/;
           useMemo(() => {
             console.log(foo);
@@ -6360,7 +6306,7 @@ const tests = {
 
     {
       code: normalizeIndent`
-        function Foo() {
+        function useFoo() {
           class Bar {};
           useMemo(() => {
             console.log(new Bar());
@@ -6391,7 +6337,7 @@ const tests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent({ theme }) {
+        function useMyComponent({ theme }) {
           const onStuff = useEffectEvent(() => {
             showNotification(theme);
           });
@@ -6412,7 +6358,7 @@ const tests = {
             {
               desc: 'Remove the dependency `onStuff`',
               output: normalizeIndent`
-                function MyComponent({ theme }) {
+                function useMyComponent({ theme }) {
                   const onStuff = useEffectEvent(() => {
                     showNotification(theme);
                   });
@@ -6435,7 +6381,7 @@ const tests = {
             {
               desc: 'Remove the dependency `onStuff`',
               output: normalizeIndent`
-                function MyComponent({ theme }) {
+                function useMyComponent({ theme }) {
                   const onStuff = useEffectEvent(() => {
                     showNotification(theme);
                   });
@@ -6461,7 +6407,7 @@ const tsTests = {
     {
       // `ref` is still constant, despite the cast.
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const ref = useRef() as MutableRefObject<HTMLDivElement>;
           useEffect(() => {
             console.log(ref.current);
@@ -6471,7 +6417,7 @@ const tsTests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const [state, setState] = useState<number>(0);
 
           useEffect(() => {
@@ -6483,7 +6429,7 @@ const tsTests = {
     },
     {
       code: normalizeIndent`
-        function App() {
+        function useApp() {
           const foo = {x: 1};
           useEffect(() => {
             const bar = {x: 2};
@@ -6495,7 +6441,7 @@ const tsTests = {
     },
     {
       code: normalizeIndent`
-        function App(props) {
+        function useApp(props) {
           useEffect(() => {
             console.log(props.test);
           }, [props.test] as const);
@@ -6504,7 +6450,7 @@ const tsTests = {
     },
     {
       code: normalizeIndent`
-        function App(props) {
+        function useApp(props) {
           useEffect(() => {
             console.log(props.test);
           }, [props.test] as any);
@@ -6513,7 +6459,7 @@ const tsTests = {
     },
     {
       code: normalizeIndent`
-        function App(props) {
+        function useApp(props) {
           useEffect((() => {
             console.log(props.test);
           }) as any, [props.test]);
@@ -6535,7 +6481,7 @@ const tsTests = {
     {
       // `local` is still non-constant, despite the cast.
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const local = {} as string;
           useEffect(() => {
             console.log(local);
@@ -6551,7 +6497,7 @@ const tsTests = {
             {
               desc: 'Update the dependencies array to be: [local]',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   const local = {} as string;
                   useEffect(() => {
                     console.log(local);
@@ -6565,7 +6511,7 @@ const tsTests = {
     },
     {
       code: normalizeIndent`
-        function App() {
+        function useApp() {
           const foo = {x: 1};
           const bar = {x: 2};
           useEffect(() => {
@@ -6583,7 +6529,7 @@ const tsTests = {
             {
               desc: 'Update the dependencies array to be: [bar]',
               output: normalizeIndent`
-                function App() {
+                function useApp() {
                   const foo = {x: 1};
                   const bar = {x: 2};
                   useEffect(() => {
@@ -6599,7 +6545,7 @@ const tsTests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const pizza = {};
 
           useEffect(() => ({
@@ -6617,7 +6563,7 @@ const tsTests = {
             {
               desc: 'Update the dependencies array to be: [pizza.crust, pizza?.toppings]',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   const pizza = {};
 
                   useEffect(() => ({
@@ -6633,7 +6579,7 @@ const tsTests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const pizza = {};
 
           useEffect(() => ({
@@ -6651,7 +6597,7 @@ const tsTests = {
             {
               desc: 'Update the dependencies array to be: [pizza.crust]',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   const pizza = {};
 
                   useEffect(() => ({
@@ -6667,7 +6613,7 @@ const tsTests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const pizza = {};
 
           useEffect(() => ({
@@ -6685,7 +6631,7 @@ const tsTests = {
             {
               desc: 'Update the dependencies array to be: [pizza.crust]',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   const pizza = {};
 
                   useEffect(() => ({
@@ -6701,7 +6647,7 @@ const tsTests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const pizza = {};
 
           useEffect(() => ({
@@ -6719,7 +6665,7 @@ const tsTests = {
             {
               desc: 'Update the dependencies array to be: [pizza?.crust]',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   const pizza = {};
 
                   useEffect(() => ({
@@ -6736,7 +6682,7 @@ const tsTests = {
     // Regression test.
     {
       code: normalizeIndent`
-        function Example(props) {
+        function useExample(props) {
           useEffect(() => {
             let topHeight = 0;
             topHeight = props.upperViewHeight;
@@ -6752,7 +6698,7 @@ const tsTests = {
             {
               desc: 'Update the dependencies array to be: [props.upperViewHeight]',
               output: normalizeIndent`
-                function Example(props) {
+                function useExample(props) {
                   useEffect(() => {
                     let topHeight = 0;
                     topHeight = props.upperViewHeight;
@@ -6767,7 +6713,7 @@ const tsTests = {
     // Regression test.
     {
       code: normalizeIndent`
-        function Example(props) {
+        function useExample(props) {
           useEffect(() => {
             let topHeight = 0;
             topHeight = props?.upperViewHeight;
@@ -6783,7 +6729,7 @@ const tsTests = {
             {
               desc: 'Update the dependencies array to be: [props?.upperViewHeight]',
               output: normalizeIndent`
-                function Example(props) {
+                function useExample(props) {
                   useEffect(() => {
                     let topHeight = 0;
                     topHeight = props?.upperViewHeight;
@@ -6797,7 +6743,7 @@ const tsTests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const [state, setState] = useState<number>(0);
 
           useEffect(() => {
@@ -6817,7 +6763,7 @@ const tsTests = {
             {
               desc: 'Update the dependencies array to be: [state]',
               output: normalizeIndent`
-              function MyComponent() {
+              function useMyComponent() {
                 const [state, setState] = useState<number>(0);
 
                 useEffect(() => {
@@ -6833,7 +6779,7 @@ const tsTests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent() {
+        function useMyComponent() {
           const [state, setState] = useState<number>(0);
 
           useMemo(() => {
@@ -6851,7 +6797,7 @@ const tsTests = {
             {
               desc: 'Update the dependencies array to be: []',
               output: normalizeIndent`
-                function MyComponent() {
+                function useMyComponent() {
                   const [state, setState] = useState<number>(0);
 
                   useMemo(() => {
@@ -6867,7 +6813,7 @@ const tsTests = {
     },
     {
       code: normalizeIndent`
-        function Foo() {
+        function useFoo() {
           const foo = {} as any;
           useMemo(() => {
             console.log(foo);
@@ -6898,7 +6844,7 @@ const tsTests = {
     },
     {
       code: normalizeIndent`
-        function MyComponent(props) {
+        function useMyComponent(props) {
           useEffect(() => {
             console.log(props.foo);
           });

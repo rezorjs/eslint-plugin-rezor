@@ -148,8 +148,7 @@ const tests = {
       code: normalizeIndent`
         // Currently invalid because it violates the convention and removes the "taint"
         // from a hook. We *could* make it valid to avoid some false positives but let's
-        // ensure that we don't break the "renderItem" and "normalFunctionWithConditionalHook"
-        // cases which must remain invalid.
+        // ensure normal functions that call hooks remain invalid.
         function normalFunctionWithHook() {
           useHookInsideNormalFunction();
         }
@@ -284,7 +283,7 @@ const tests = {
       code: normalizeIndent`
         // Currently invalid.
         // These are variations capturing the current heuristic--
-        // we only allow hooks in PascalCase or useFoo functions.
+        // we only allow hooks in direct Rezor factory functions or useFoo functions.
         // We *could* make some of these valid. But before doing it,
         // consider specific cases documented above that contain reasoning.
         function a() { useState(); }
