@@ -6408,7 +6408,7 @@ const tsTests = {
       // `ref` is still constant, despite the cast.
       code: normalizeIndent`
         function useMyComponent() {
-          const ref = useRef() as MutableRefObject<HTMLDivElement>;
+          const ref = useRef() as RefObject<unknown>;
           useEffect(() => {
             console.log(ref.current);
           }, []);
