@@ -14,9 +14,10 @@
     "./package.json": "./package.json"
   },
   "scripts": {
-    "format": "prettier --check \"**/*.{js,json,md}\"",
+    "format": "prettier --check \"**/*.{js,ts,json,md}\"",
     "lint": "eslint .",
     "type": "tsc --noEmit",
+    "test": "node --test __tests__/*.spec.ts",
     "prepare": "husky"
   },
   "keywords": [

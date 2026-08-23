@@ -1,6 +1,6 @@
 import type { Rule, Scope } from 'eslint'
 import type { CallExpression, DoWhileStatement, Node } from 'estree'
-import { getAdditionalEffectHooksFromSettings } from '../shared/utils.js'
+import { getAdditionalEffectHooksFromSettings } from '../shared/utils.ts'
 
 /**
  * Catch all identifiers that begin with "use" followed by an uppercase Latin

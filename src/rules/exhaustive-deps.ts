@@ -11,7 +11,7 @@ import type {
   Pattern,
   Super,
 } from 'estree'
-import { getAdditionalEffectHooksFromSettings } from '../shared/utils.js'
+import { getAdditionalEffectHooksFromSettings } from '../shared/utils.ts'
 
 type DeclaredDependency = { key: string; node: Node }
 

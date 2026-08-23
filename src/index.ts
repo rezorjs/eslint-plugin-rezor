@@ -1,6 +1,6 @@
 import type { Linter, Rule } from 'eslint'
-import ExhaustiveDeps from './rules/exhaustive-deps.js'
-import RulesOfHooks from './rules/rules-of-hooks.js'
+import ExhaustiveDeps from './rules/exhaustive-deps.ts'
+import RulesOfHooks from './rules/rules-of-hooks.ts'
 
 const rules = {
   'exhaustive-deps': ExhaustiveDeps,

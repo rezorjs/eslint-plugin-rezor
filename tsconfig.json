@@ -9,7 +9,8 @@
     "resolveJsonModule": true,
     "noFallthroughCasesInSwitch": true,
     "noUnusedLocals": true,
-    "noUnusedParameters": true
+    "noUnusedParameters": true,
+    "rewriteRelativeImportExtensions": true
   },
-  "include": ["estree.d.ts", "src"]
+  "include": ["estree.d.ts", "src", "__tests__"]
 }
