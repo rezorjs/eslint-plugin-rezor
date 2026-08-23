@@ -546,36 +546,46 @@ function asyncComponentHookError(fn: string) {
 const allTests = {
   valid: [
     ...tests.valid,
-    normalizeIndent`
-      defineApp(() => {
-        useState();
-      });
-    `,
-    normalizeIndent`
-      defineApp({
-        render() {
+    {
+      code: normalizeIndent`
+        defineApp(() => {
           useState();
-        },
-      });
-    `,
-    normalizeIndent`
-      defineComponent(() => {
-        useState();
-      });
-    `,
-    normalizeIndent`
-      defineComponent({
-        render() {
+        });
+      `,
+    },
+    {
+      code: normalizeIndent`
+        defineApp({
+          render() {
+            useState();
+          },
+        });
+      `,
+    },
+    {
+      code: normalizeIndent`
+        defineComponent(() => {
           useState();
-        },
-      });
-    `,
-    normalizeIndent`
-      defineComponent(() => {
-        const event = useEffectEvent(() => {});
-        useEffect(() => event());
-      });
-    `,
+        });
+      `,
+    },
+    {
+      code: normalizeIndent`
+        defineComponent({
+          render() {
+            useState();
+          },
+        });
+      `,
+    },
+    {
+      code: normalizeIndent`
+        defineComponent(() => {
+          const event = useEffectEvent(() => {});
+          useEffect(() => event());
+        });
+      `,
+    },
   ],
   invalid: [
     ...tests.invalid,

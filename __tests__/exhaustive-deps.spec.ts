@@ -6865,55 +6865,70 @@ const tsTests = {
 const allTests = {
   valid: [
     ...tests.valid,
-    normalizeIndent`
-      defineApp((options) => {
-        useEffect(() => {
-          console.log(options.scene);
-        }, []);
-      });
-    `,
-    normalizeIndent`
-      defineApp({
-        render({ scene }) {
+    {
+      code: normalizeIndent`
+        defineApp((options) => {
+          useEffect(() => {
+            console.log(options.scene);
+          }, []);
+        });
+      `,
+    },
+    {
+      code: normalizeIndent`
+        defineApp({
+          render({ scene }) {
+            useEffect(() => {
+              console.log(scene);
+            }, []);
+          },
+        });
+      `,
+    },
+    {
+      code: normalizeIndent`
+        defineApp((options) => {
+          const { scene } = options
           useEffect(() => {
             console.log(scene);
           }, []);
-        },
-      });
-    `,
-    normalizeIndent`
-      defineApp((options) => {
-        const { scene } = options
-        useEffect(() => {
-          console.log(scene);
-        }, []);
-      });
-    `,
-    normalizeIndent`
-      defineComponent((props, context) => {
-        useEffect(() => {
-          context.router.navigateBack();
-        }, []);
-      });
-    `,
-    normalizeIndent`
-      defineComponent((props, context) => {
-        const { router } = context;
-        useEffect(() => {
-          router.navigateBack();
-          console.log(props.value);
-        }, [props.value]);
-      });
-    `,
-    normalizeIndent`
-      defineComponent({
-        render(props, { router: { navigateBack } }) {
+        });
+      `,
+    },
+    {
+      code: normalizeIndent`
+        defineComponent((props, context) => {
           useEffect(() => {
-            navigateBack();
-          }, []);
-        },
-      });
-    `,
+            context.router.navigateBack();
+            console.log(props.value);
+          }, [props.value]);
+        });
+      `,
+    },
+    {
+      code: normalizeIndent`
+        defineComponent((props, context) => {
+          const { value } = props;
+          const { router } = context;
+          useEffect(() => {
+            router.navigateBack();
+            console.log(value);
+          }, [value]);
+        });
+      `,
+    },
+    {
+      code: normalizeIndent`
+        defineComponent({
+          render({ value }, { router: { navigateBack } }) {
+            useEffect(() => {
+              navigateBack();
+              console.log(value);
+            }, [value]);
+          },
+        });
+      `,
+    },
   ],
   invalid: [
     ...tests.invalid,
@@ -6921,8 +6936,8 @@ const allTests = {
       code: normalizeIndent`
         defineComponent((props, context) => {
           useEffect(() => {
-            console.log(props.value);
             context.router.navigateBack();
+            console.log(props.value);
           }, []);
         });
       `,
@@ -6937,9 +6952,77 @@ const allTests = {
               output: normalizeIndent`
                 defineComponent((props, context) => {
                   useEffect(() => {
-                    console.log(props.value);
                     context.router.navigateBack();
+                    console.log(props.value);
                   }, [props.value]);
+                });
+              `,
+            },
+          ],
+        },
+      ],
+    },
+    {
+      code: normalizeIndent`
+        defineComponent((props, context) => {
+          const { value } = props;
+          const { router } = context;
+          useEffect(() => {
+            router.navigateBack();
+            console.log(value);
+          }, []);
+        });
+      `,
+      errors: [
+        {
+          message:
+            "Rezor Hook useEffect has a missing dependency: 'value'. " +
+            'Either include it or remove the dependency array.',
+          suggestions: [
+            {
+              desc: 'Update the dependencies array to be: [value]',
+              output: normalizeIndent`
+                defineComponent((props, context) => {
+                  const { value } = props;
+                  const { router } = context;
+                  useEffect(() => {
+                    router.navigateBack();
+                    console.log(value);
+                  }, [value]);
+                });
+              `,
+            },
+          ],
+        },
+      ],
+    },
+    {
+      code: normalizeIndent`
+        defineComponent({
+          render({ value }, { router: { navigateBack } }) {
+            useEffect(() => {
+              navigateBack();
+              console.log(value);
+            }, []);
+          },
+        });
+      `,
+      errors: [
+        {
+          message:
+            "Rezor Hook useEffect has a missing dependency: 'value'. " +
+            'Either include it or remove the dependency array.',
+          suggestions: [
+            {
+              desc: 'Update the dependencies array to be: [value]',
+              output: normalizeIndent`
+                defineComponent({
+                  render({ value }, { router: { navigateBack } }) {
+                    useEffect(() => {
+                      navigateBack();
+                      console.log(value);
+                    }, [value]);
+                  },
                 });
               `,
             },
