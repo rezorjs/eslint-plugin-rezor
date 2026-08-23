@@ -1,14 +1,5 @@
 import type { Rule, Scope } from 'eslint'
-import type {
-  CallExpression,
-  CatchClause,
-  DoWhileStatement,
-  Expression,
-  Identifier,
-  Node,
-  Super,
-  TryStatement,
-} from 'estree'
+import type { CallExpression, DoWhileStatement, Node } from 'estree'
 
 import { getAdditionalEffectHooksFromSettings } from '../shared/utils.js'
 
@@ -17,7 +8,7 @@ import { getAdditionalEffectHooksFromSettings } from '../shared/utils.js'
  * character to exclude identifiers like "user".
  */
 function isHookName(s: string): boolean {
-  return s === 'use' || /^use[A-Z0-9]/.test(s)
+  return /^use[A-Z0-9]/.test(s)
 }
 
 /**
@@ -40,60 +31,59 @@ function isHook(node: Node): boolean {
   }
 }
 
-/**
- * Checks if the node is a React component name. React component names must
- * always start with an uppercase letter.
- */
-function isComponentName(node: Node): boolean {
-  return node.type === 'Identifier' && /^[A-Z]/.test(node.name)
-}
-
-function isReactFunction(node: Node, functionName: string): boolean {
+function isRezorComponentFactory(node: Node): boolean {
   return (
-    ('name' in node && node.name === functionName) ||
-    (node.type === 'MemberExpression' &&
-      'name' in node.object &&
-      node.object.name === 'React' &&
-      'name' in node.property &&
-      node.property.name === functionName)
+    node.type === 'Identifier' &&
+    (node.name === 'defineApp' || node.name === 'defineComponent')
   )
 }
 
-/**
- * Checks if the node is a callback argument of forwardRef. This render function
- * should follow the rules of hooks.
- */
-function isForwardRefCallback(node: Node): boolean {
-  return !!(
-    node.parent &&
-    'callee' in node.parent &&
-    node.parent.callee &&
-    isReactFunction(node.parent.callee, 'forwardRef')
-  )
-}
+function isRezorComponentFunction(node: Node): boolean {
+  if (
+    node.type !== 'ArrowFunctionExpression' &&
+    node.type !== 'FunctionExpression'
+  ) {
+    return false
+  }
 
-/**
- * Checks if the node is a callback argument of React.memo. This anonymous
- * functional component should follow the rules of hooks.
- */
-function isMemoCallback(node: Node): boolean {
+  const parent = node.parent
+
+  if (
+    parent?.type === 'CallExpression' &&
+    parent.arguments[0] === node &&
+    isRezorComponentFactory(parent.callee)
+  ) {
+    return true
+  }
+
+  if (
+    parent?.type !== 'Property' ||
+    parent.value !== node ||
+    parent.computed ||
+    parent.key.type !== 'Identifier' ||
+    parent.key.name !== 'render'
+  ) {
+    return false
+  }
+
+  const objectExpression = parent.parent
+  const callExpression = objectExpression?.parent
+
   return !!(
-    node.parent &&
-    'callee' in node.parent &&
-    node.parent.callee &&
-    isReactFunction(node.parent.callee, 'memo')
+    objectExpression?.type === 'ObjectExpression' &&
+    callExpression?.type === 'CallExpression' &&
+    callExpression.arguments[0] === objectExpression &&
+    isRezorComponentFactory(callExpression.callee)
   )
 }
 
 function isInsideComponentOrHook(node: Node | undefined): boolean {
   while (node) {
     const functionName = getFunctionName(node)
-    if (functionName) {
-      if (isComponentName(functionName) || isHook(functionName)) {
-        return true
-      }
+    if (functionName && isHook(functionName)) {
+      return true
     }
-    if (isForwardRefCallback(node) || isMemoCallback(node)) {
+    if (isRezorComponentFunction(node)) {
       return true
     }
     node = node.parent
@@ -111,39 +101,10 @@ function isInsideDoWhileLoop(node: Node | undefined): node is DoWhileStatement {
   return false
 }
 
-function isInsideTryCatch(
-  node: Node | undefined,
-): node is TryStatement | CatchClause {
-  while (node) {
-    if (node.type === 'TryStatement' || node.type === 'CatchClause') {
-      return true
-    }
-    node = node.parent
-  }
-  return false
-}
-
-function getNodeWithoutReactNamespace(
-  node: Expression | Super,
-): Expression | Identifier | Super {
-  if (
-    node.type === 'MemberExpression' &&
-    node.object.type === 'Identifier' &&
-    node.object.name === 'React' &&
-    node.property.type === 'Identifier' &&
-    !node.computed
-  ) {
-    return node.property
-  }
-  return node
-}
-
 function isEffectIdentifier(node: Node, additionalHooks?: RegExp): boolean {
   const isBuiltInEffect =
     node.type === 'Identifier' &&
-    (node.name === 'useEffect' ||
-      node.name === 'useLayoutEffect' ||
-      node.name === 'useInsertionEffect')
+    (node.name === 'useEffect' || node.name === 'useRenderEffect')
 
   if (isBuiltInEffect) {
     return true
@@ -165,30 +126,22 @@ function useEffectEventError(fn: string | null, called: boolean): string {
   // no function identifier, i.e. it is not assigned to a variable
   if (fn === null) {
     return (
-      `React Hook "useEffectEvent" can only be called at the top level of your component.` +
+      `Rezor Hook "useEffectEvent" can only be called at the top level of your component.` +
       ` It cannot be passed down.`
     )
   }
 
   return (
-    `\`${fn}\` is a function created with React Hook "useEffectEvent", and can only be called from ` +
+    `\`${fn}\` is a function created with Rezor Hook "useEffectEvent", and can only be called from ` +
     'Effects and Effect Events in the same component.' +
     (called ? '' : ' It cannot be assigned to a variable or passed down.')
   )
 }
 
-function isUseIdentifier(node: Node): boolean {
-  return isReactFunction(node, 'use')
-}
-
 const rule = {
   meta: {
     type: 'problem',
-    docs: {
-      description: 'enforces the Rules of Hooks',
-      recommended: true,
-      url: 'https://react.dev/reference/rules/rules-of-hooks',
-    },
+    docs: { description: 'enforces the Rules of Hooks', recommended: true },
     schema: [
       {
         type: 'object',
@@ -204,9 +157,8 @@ const rule = {
     const additionalEffectHooks = getAdditionalEffectHooksFromSettings(settings)
 
     let lastEffect: CallExpression | null = null
-    const codePathReactHooksMapStack: Array<
-      Map<Rule.CodePathSegment, Array<Node>>
-    > = []
+    const codePathHooksMapStack: Array<Map<Rule.CodePathSegment, Array<Node>>> =
+      []
     const codePathSegmentStack: Array<Rule.CodePathSegment> = []
     const useEffectEventFunctions = new WeakSet()
 
@@ -235,20 +187,6 @@ const rule = {
       }
     }
 
-    function hasFlowSuppression(node: Node, suppression: string) {
-      const comments = sourceCode.getAllComments()
-      const flowSuppressionRegex = new RegExp(
-        '\\$FlowFixMe\\[' + suppression + '\\]',
-      )
-      return comments.some(
-        (commentNode) =>
-          flowSuppressionRegex.test(commentNode.value) &&
-          commentNode.loc != null &&
-          node.loc != null &&
-          commentNode.loc.end.line === node.loc.start.line - 1,
-      )
-    }
-
     return {
       // Maintain code segment path stack as we traverse.
       onCodePathSegmentStart: (segment: Rule.CodePathSegment) =>
@@ -257,20 +195,20 @@ const rule = {
 
       // Maintain code path stack as we traverse.
       onCodePathStart: () =>
-        codePathReactHooksMapStack.push(
+        codePathHooksMapStack.push(
           new Map<Rule.CodePathSegment, Array<Node>>(),
         ),
 
       // Process our code path.
       //
-      // Everything is ok if all React Hooks are both reachable from the initial
+      // Everything is ok if all hooks are both reachable from the initial
       // segment and reachable from every final segment.
       onCodePathEnd(codePath: any, codePathNode: Node) {
-        const reactHooksMap = codePathReactHooksMapStack.pop()
-        if (reactHooksMap?.size === 0) {
+        const hooksMap = codePathHooksMapStack.pop()
+        if (hooksMap?.size === 0) {
           return
-        } else if (typeof reactHooksMap === 'undefined') {
-          throw new Error('Unexpected undefined reactHooksMap')
+        } else if (typeof hooksMap === 'undefined') {
+          throw new Error('Unexpected undefined hooksMap')
         }
 
         // All of the segments which are cyclic are recorded in this set.
@@ -281,7 +219,7 @@ const rule = {
          * segment. For example:
          *
          * ```js
-         * function MyComponent() {
+         * function useExample() {
          *   if (condition) {
          *     // Segment 1
          *   } else {
@@ -291,8 +229,8 @@ const rule = {
          * }
          * ```
          *
-         * Segments 1 and 2 have one path to the beginning of `MyComponent` and
-         * segment 3 has two paths to the beginning of `MyComponent` since we
+         * Segments 1 and 2 have one path to the beginning of `useExample` and
+         * segment 3 has two paths to the beginning of `useExample` since we
          * could have either taken the path of segment 1 or segment 2.
          *
          * Populates `cyclic` with cyclic segments.
@@ -354,7 +292,7 @@ const rule = {
          * function. For example:
          *
          * ```js
-         * function MyComponent() {
+         * function useExample() {
          *   // Segment 1
          *   if (condition) {
          *     // Segment 2
@@ -364,8 +302,8 @@ const rule = {
          * }
          * ```
          *
-         * Segments 2 and 3 have one path to the end of `MyComponent` and
-         * segment 1 has two paths to the end of `MyComponent` since we could
+         * Segments 2 and 3 have one path to the end of `useExample` and
+         * segment 1 has two paths to the end of `useExample` since we could
          * either take the path of segment 1 or segment 2.
          *
          * Populates `cyclic` with cyclic segments.
@@ -421,7 +359,7 @@ const rule = {
          * For example:
          *
          * ```js
-         * function MyComponent() {
+         * function useExample() {
          *   if (condition) {
          *     // Segment 1
          *   }
@@ -483,21 +421,16 @@ const rule = {
 
         // Gets the function name for our code path. If the function name is
         // `undefined` then we know either that we have an anonymous function
-        // expression or our code path is not in a function. In both cases we
-        // will want to error since neither are React function components or
-        // hook functions - unless it is an anonymous function argument to
-        // forwardRef or memo.
+        // expression or our code path is not in a function.
         const codePathFunctionName = getFunctionName(codePathNode)
 
-        // This is a valid code path for React hooks if we are directly in a React
-        // function component or we are in a hook function.
+        // This is a valid code path for hooks if it belongs to a Rezor component
+        // or a custom hook function.
         const isSomewhereInsideComponentOrHook =
           isInsideComponentOrHook(codePathNode)
         const isDirectlyInsideComponentOrHook =
-          codePathFunctionName ?
-            isComponentName(codePathFunctionName) ||
-            isHook(codePathFunctionName)
-          : isForwardRefCallback(codePathNode) || isMemoCallback(codePathNode)
+          isRezorComponentFunction(codePathNode) ||
+          (codePathFunctionName != null && isHook(codePathFunctionName))
 
         // Compute the earliest finalizer level using information from the
         // cache. We expect all reachable final segments to have a cache entry
@@ -513,9 +446,8 @@ const rule = {
           }
         }
 
-        // Make sure all React Hooks pass our lint invariants. Log warnings
-        // if not.
-        for (const [segment, reactHooks] of reactHooksMap) {
+        // Make sure all hooks pass our lint invariants. Log warnings if not.
+        for (const [segment, hooks] of hooksMap) {
           // NOTE: We could report here that the hook is not reachable, but
           // that would be redundant with more general "no unreachable"
           // lint rules.
@@ -540,7 +472,7 @@ const rule = {
           // to this point! Consider:
           //
           // ```js
-          // function MyComponent() {
+          // function useExample() {
           //   if (a) {
           //     // Segment 1
           //   } else {
@@ -574,41 +506,20 @@ const rule = {
           // Is this hook a part of a cyclic segment?
           const cycled = cyclic.has(segment.id)
 
-          for (const hook of reactHooks) {
-            // Skip reporting if this hook already has a relevant flow suppression.
-            if (hasFlowSuppression(hook, 'react-rule-hook')) {
-              continue
-            }
-
-            // Report an error if use() is called inside try/catch.
-            if (isUseIdentifier(hook) && isInsideTryCatch(hook)) {
-              context.report({
-                node: hook,
-                message: `React Hook "${sourceCode.getText(
-                  hook,
-                )}" cannot be called in a try/catch block.`,
-              })
-            }
-
+          for (const hook of hooks) {
             // Report an error if a hook may be called more then once.
-            // `use(...)` can be called in loops.
-            if (
-              (cycled || isInsideDoWhileLoop(hook)) &&
-              !isUseIdentifier(hook)
-            ) {
+            if (cycled || isInsideDoWhileLoop(hook)) {
               context.report({
                 node: hook,
                 message:
-                  `React Hook "${sourceCode.getText(
-                    hook,
-                  )}" may be executed ` +
+                  `Rezor Hook "${sourceCode.getText(hook)}" may be executed ` +
                   'more than once. Possibly because it is called in a loop. ' +
-                  'React Hooks must be called in the exact same order in ' +
+                  'Rezor Hooks must be called in the exact same order in ' +
                   'every component render.',
               })
             }
 
-            // If this is not a valid code path for React hooks then we need to
+            // If this is not a valid code path for hooks then we need to
             // log a warning for every hook in this code path.
             //
             // Pick a special message depending on the scope this hook was
@@ -621,7 +532,7 @@ const rule = {
                 context.report({
                   node: hook,
                   message:
-                    `React Hook "${sourceCode.getText(hook)}" cannot be ` +
+                    `Rezor Hook "${sourceCode.getText(hook)}" cannot be ` +
                     'called in an async function.',
                 })
               }
@@ -633,15 +544,14 @@ const rule = {
               if (
                 !cycled &&
                 pathsFromStartToEnd !== allPathsFromStartToEnd &&
-                !isUseIdentifier(hook) && // `use(...)` can be called conditionally.
                 !isInsideDoWhileLoop(hook) // wrapping do/while loops are checked separately.
               ) {
                 const message =
-                  `React Hook "${sourceCode.getText(hook)}" is called ` +
-                  'conditionally. React Hooks must be called in the exact ' +
+                  `Rezor Hook "${sourceCode.getText(hook)}" is called ` +
+                  'conditionally. Rezor Hooks must be called in the exact ' +
                   'same order in every component render.' +
                   (possiblyHasEarlyReturn ?
-                    ' Did you accidentally call a React Hook after an' +
+                    ' Did you accidentally call a Rezor Hook after an' +
                     ' early return?'
                   : '')
                 context.report({ node: hook, message })
@@ -649,37 +559,32 @@ const rule = {
             } else if (
               codePathNode.parent != null &&
               (codePathNode.parent.type === 'MethodDefinition' ||
-                // @ts-expect-error `ClassProperty` was removed from typescript-estree in https://github.com/typescript-eslint/typescript-eslint/pull/3806
-                codePathNode.parent.type === 'ClassProperty' ||
                 codePathNode.parent.type === 'PropertyDefinition') &&
               codePathNode.parent.value === codePathNode
             ) {
               // Custom message for hooks inside a class
               const message =
-                `React Hook "${sourceCode.getText(
-                  hook,
-                )}" cannot be called ` +
-                'in a class component. React Hooks must be called in a ' +
-                'React function component or a custom React Hook function.'
+                `Rezor Hook "${sourceCode.getText(hook)}" cannot be called ` +
+                'in a class. Rezor Hooks must be called in a Rezor component ' +
+                'or a custom Hook function.'
               context.report({ node: hook, message })
             } else if (codePathFunctionName) {
               // Custom message if we found an invalid function name.
               const message =
-                `React Hook "${sourceCode.getText(hook)}" is called in ` +
+                `Rezor Hook "${sourceCode.getText(hook)}" is called in ` +
                 `function "${sourceCode.getText(codePathFunctionName)}" ` +
-                'that is neither a React function component nor a custom ' +
-                'React Hook function.' +
-                ' React component names must start with an uppercase letter.' +
-                ' React Hook names must start with the word "use".'
+                'that is neither a Rezor component function nor a custom ' +
+                'Hook function.' +
+                ' Rezor component functions must be passed to defineApp or ' +
+                'defineComponent.' +
+                ' Hook names must start with the word "use".'
               context.report({ node: hook, message })
             } else if (codePathNode.type === 'Program') {
               // These are dangerous if you have inline requires enabled.
               const message =
-                `React Hook "${sourceCode.getText(
-                  hook,
-                )}" cannot be called ` +
-                'at the top level. React Hooks must be called in a ' +
-                'React function component or a custom React Hook function.'
+                `Rezor Hook "${sourceCode.getText(hook)}" cannot be called ` +
+                'at the top level. Rezor Hooks must be called in a Rezor ' +
+                'component or a custom Hook function.'
               context.report({ node: hook, message })
             } else {
               // Assume in all other cases the user called a hook in some
@@ -687,14 +592,11 @@ const rule = {
               // anonymous function expressions. Hopefully this is clarifying
               // enough in the common case that the incorrect message in
               // uncommon cases doesn't matter.
-              // `use(...)` can be called in callbacks.
-              if (isSomewhereInsideComponentOrHook && !isUseIdentifier(hook)) {
+              if (isSomewhereInsideComponentOrHook) {
                 const message =
-                  `React Hook "${sourceCode.getText(
-                    hook,
-                  )}" cannot be called ` +
-                  'inside a callback. React Hooks must be called in a ' +
-                  'React function component or a custom React Hook function.'
+                  `Rezor Hook "${sourceCode.getText(hook)}" cannot be called ` +
+                  'inside a callback. Rezor Hooks must be called in a Rezor ' +
+                  'component or a custom Hook function.'
                 context.report({ node: hook, message })
               }
             }
@@ -710,23 +612,22 @@ const rule = {
         if (isHook(node.callee)) {
           // Add the hook node to a map keyed by the code path segment. We will
           // do full code path analysis at the end of our code path.
-          const reactHooksMap = last(codePathReactHooksMapStack)
+          const hooksMap = last(codePathHooksMapStack)
           const codePathSegment = last(codePathSegmentStack)
-          let reactHooks = reactHooksMap.get(codePathSegment)
-          if (!reactHooks) {
-            reactHooks = []
-            reactHooksMap.set(codePathSegment, reactHooks)
+          let hooks = hooksMap.get(codePathSegment)
+          if (!hooks) {
+            hooks = []
+            hooksMap.set(codePathSegment, hooks)
           }
-          reactHooks.push(node.callee)
+          hooks.push(node.callee)
         }
 
         // useEffectEvent: useEffectEvent functions can be passed by reference within useEffect as well as in
         // another useEffectEvent
-        // Check all `useEffect` and `React.useEffect`, `useEffectEvent`, and `React.useEffectEvent`
-        const nodeWithoutNamespace = getNodeWithoutReactNamespace(node.callee)
+        // Check all effect and Effect Event calls.
         if (
-          (isEffectIdentifier(nodeWithoutNamespace, additionalEffectHooks) ||
-            isUseEffectEventIdentifier(nodeWithoutNamespace)) &&
+          (isEffectIdentifier(node.callee, additionalEffectHooks) ||
+            isUseEffectEventIdentifier(node.callee)) &&
           node.arguments.length > 0
         ) {
           // Denote that we have traversed into a useEffect call, and stash the CallExpr for
@@ -734,10 +635,11 @@ const rule = {
           lastEffect = node
         }
 
-        // Specifically disallow <Child onClick={useEffectEvent(...)} /> because this
-        // case can't be caught by `recordAllUseEffectEventFunctions` as it isn't assigned to a variable
+        // Disallow passing the result of useEffectEvent directly because this
+        // case isn't assigned to a variable and can't be caught by
+        // `recordAllUseEffectEventFunctions`.
         if (
-          isUseEffectEventIdentifier(nodeWithoutNamespace) &&
+          isUseEffectEventIdentifier(node.callee) &&
           node.parent?.type !== 'VariableDeclarator' &&
           // like in other hooks, calling useEffectEvent at component's top level without assignment is valid
           node.parent?.type !== 'ExpressionStatement'
@@ -768,29 +670,17 @@ const rule = {
       },
 
       FunctionDeclaration(node) {
-        // function MyComponent() { const onClick = useEffectEvent(...) }
+        // function useCustomHook() { const onClick = useEffectEvent(...) }
         if (isInsideComponentOrHook(node)) {
           recordAllUseEffectEventFunctions(sourceCode.getScope(node))
         }
       },
 
       ArrowFunctionExpression(node) {
-        // const MyComponent = () => { const onClick = useEffectEvent(...) }
+        // defineComponent(() => { const onClick = useEffectEvent(...) })
         if (isInsideComponentOrHook(node)) {
           recordAllUseEffectEventFunctions(sourceCode.getScope(node))
         }
-      },
-
-      // @ts-expect-error parser-hermes produces these node types
-      ComponentDeclaration(node) {
-        // component MyComponent() { const onClick = useEffectEvent(...) }
-        recordAllUseEffectEventFunctions(sourceCode.getScope(node))
-      },
-
-      // @ts-expect-error parser-hermes produces these node types
-      HookDeclaration(node) {
-        // hook useMyHook() { const onClick = useEffectEvent(...) }
-        recordAllUseEffectEventFunctions(sourceCode.getScope(node))
       },
     }
   },
@@ -806,10 +696,6 @@ const rule = {
 
 function getFunctionName(node: Node) {
   if (
-    // @ts-expect-error parser-hermes produces these node types
-    node.type === 'ComponentDeclaration' ||
-    // @ts-expect-error parser-hermes produces these node types
-    node.type === 'HookDeclaration' ||
     node.type === 'FunctionDeclaration' ||
     (node.type === 'FunctionExpression' && node.id)
   ) {
@@ -844,13 +730,6 @@ function getFunctionName(node: Node) {
       // {useHook: () => {}}
       // {useHook() {}}
       return node.parent.key
-
-      // NOTE: We could also support `ClassProperty` and `MethodDefinition`
-      // here to be pedantic. However, hooks in a class are an anti-pattern. So
-      // we don't allow it to error early.
-      //
-      // class {useHook = () => {}}
-      // class {useHook() {}}
     } else if (
       node.parent?.type === 'AssignmentPattern' &&
       node.parent.right === node &&
