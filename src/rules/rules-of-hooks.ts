@@ -1,6 +1,5 @@
 import type { Rule, Scope } from 'eslint'
 import type { CallExpression, DoWhileStatement, Node } from 'estree'
-
 import { getAdditionalEffectHooksFromSettings } from '../shared/utils.js'
 
 /**
@@ -671,6 +670,13 @@ const rule = {
 
       FunctionDeclaration(node) {
         // function useCustomHook() { const onClick = useEffectEvent(...) }
+        if (isInsideComponentOrHook(node)) {
+          recordAllUseEffectEventFunctions(sourceCode.getScope(node))
+        }
+      },
+
+      FunctionExpression(node) {
+        // defineComponent({ render() { const onClick = useEffectEvent(...) } })
         if (isInsideComponentOrHook(node)) {
           recordAllUseEffectEventFunctions(sourceCode.getScope(node))
         }
