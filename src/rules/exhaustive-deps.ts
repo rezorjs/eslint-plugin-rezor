@@ -13,7 +13,6 @@ import type {
   Super,
   VariableDeclarator,
 } from 'estree'
-
 import { getAdditionalEffectHooksFromSettings } from '../shared/utils.js'
 
 type DeclaredDependency = { key: string; node: Node }
