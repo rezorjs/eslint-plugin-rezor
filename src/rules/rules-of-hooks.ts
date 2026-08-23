@@ -509,7 +509,7 @@ const rule = {
             if (isDirectlyInsideComponentOrHook) {
               // Report an error if the hook is called inside an async function.
               // @ts-expect-error the above check hasn't properly type-narrowed `codePathNode` (async doesn't exist on Node)
-              const isAsyncFunction = codePathNode.async
+              const isAsyncFunction = codePathNode.async as unknown
               if (isAsyncFunction) {
                 context.report({
                   node: hook,

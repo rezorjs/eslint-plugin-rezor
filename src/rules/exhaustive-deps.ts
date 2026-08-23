@@ -124,7 +124,9 @@ const rule = {
     ],
   },
   create(context: Rule.RuleContext) {
-    const rawOptions = context.options[0]
+    const rawOptions = context.options[0] as
+      | undefined
+      | { additionalHooks?: string; requireExplicitEffectDeps?: boolean }
     const settings = context.settings
     const sourceCode = context.sourceCode
 
@@ -135,7 +137,7 @@ const rule = {
         new RegExp(rawOptions.additionalHooks)
       : getAdditionalEffectHooksFromSettings(settings)
 
-    const requireExplicitEffectDeps: boolean =
+    const requireExplicitEffectDeps =
       (rawOptions && rawOptions.requireExplicitEffectDeps) || false
 
     const options = { additionalHooks, requireExplicitEffectDeps }
@@ -600,7 +602,7 @@ const rule = {
       if (!declaredDependenciesNode) {
         // Check if there are any top-level setState() calls.
         // Those tend to lead to infinite loops.
-        let setStateInsideEffectWithoutDeps: string | null = null
+        let setStateInsideEffectWithoutDeps = null as null | string
         dependencies.forEach(({ references }, key) => {
           if (setStateInsideEffectWithoutDeps) {
             return
@@ -980,7 +982,7 @@ const rule = {
 
       let extraWarning = ''
       if (unnecessaryDependencies.size > 0) {
-        let badRef: string | null = null
+        let badRef = null as null | string
         Array.from(unnecessaryDependencies.keys()).forEach((key) => {
           if (badRef !== null) {
             return
@@ -1042,7 +1044,7 @@ const rule = {
       if (!extraWarning && missingDependencies.size > 0) {
         // See if the user is trying to avoid specifying a callable prop.
         // This usually means they're unaware of useCallback.
-        let missingCallbackDep: string | null = null
+        let missingCallbackDep = null as null | string
         missingDependencies.forEach((missingDep) => {
           if (missingCallbackDep) {
             return
