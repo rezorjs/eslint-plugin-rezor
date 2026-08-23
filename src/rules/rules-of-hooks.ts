@@ -198,7 +198,8 @@ const rule = {
     ],
   },
   create(context: Rule.RuleContext) {
-    const settings = context.settings || {}
+    const settings = context.settings
+    const sourceCode = context.sourceCode
 
     const additionalEffectHooks = getAdditionalEffectHooksFromSettings(settings)
 
@@ -234,31 +235,7 @@ const rule = {
       }
     }
 
-    /**
-     * SourceCode that also works down to ESLint 3.0.0
-     */
-    const getSourceCode =
-      typeof context.getSourceCode === 'function' ?
-        () => {
-          return context.getSourceCode()
-        }
-      : () => {
-          return context.sourceCode
-        }
-    /**
-     * SourceCode#getScope that also works down to ESLint 3.0.0
-     */
-    const getScope =
-      typeof context.getScope === 'function' ?
-        (): Scope.Scope => {
-          return context.getScope()
-        }
-      : (node: Node): Scope.Scope => {
-          return getSourceCode().getScope(node)
-        }
-
     function hasFlowSuppression(node: Node, suppression: string) {
-      const sourceCode = getSourceCode()
       const comments = sourceCode.getAllComments()
       const flowSuppressionRegex = new RegExp(
         '\\$FlowFixMe\\[' + suppression + '\\]',
@@ -607,7 +584,7 @@ const rule = {
             if (isUseIdentifier(hook) && isInsideTryCatch(hook)) {
               context.report({
                 node: hook,
-                message: `React Hook "${getSourceCode().getText(
+                message: `React Hook "${sourceCode.getText(
                   hook,
                 )}" cannot be called in a try/catch block.`,
               })
@@ -622,7 +599,7 @@ const rule = {
               context.report({
                 node: hook,
                 message:
-                  `React Hook "${getSourceCode().getText(
+                  `React Hook "${sourceCode.getText(
                     hook,
                   )}" may be executed ` +
                   'more than once. Possibly because it is called in a loop. ' +
@@ -644,7 +621,7 @@ const rule = {
                 context.report({
                   node: hook,
                   message:
-                    `React Hook "${getSourceCode().getText(hook)}" cannot be ` +
+                    `React Hook "${sourceCode.getText(hook)}" cannot be ` +
                     'called in an async function.',
                 })
               }
@@ -660,7 +637,7 @@ const rule = {
                 !isInsideDoWhileLoop(hook) // wrapping do/while loops are checked separately.
               ) {
                 const message =
-                  `React Hook "${getSourceCode().getText(hook)}" is called ` +
+                  `React Hook "${sourceCode.getText(hook)}" is called ` +
                   'conditionally. React Hooks must be called in the exact ' +
                   'same order in every component render.' +
                   (possiblyHasEarlyReturn ?
@@ -679,7 +656,7 @@ const rule = {
             ) {
               // Custom message for hooks inside a class
               const message =
-                `React Hook "${getSourceCode().getText(
+                `React Hook "${sourceCode.getText(
                   hook,
                 )}" cannot be called ` +
                 'in a class component. React Hooks must be called in a ' +
@@ -688,8 +665,8 @@ const rule = {
             } else if (codePathFunctionName) {
               // Custom message if we found an invalid function name.
               const message =
-                `React Hook "${getSourceCode().getText(hook)}" is called in ` +
-                `function "${getSourceCode().getText(codePathFunctionName)}" ` +
+                `React Hook "${sourceCode.getText(hook)}" is called in ` +
+                `function "${sourceCode.getText(codePathFunctionName)}" ` +
                 'that is neither a React function component nor a custom ' +
                 'React Hook function.' +
                 ' React component names must start with an uppercase letter.' +
@@ -698,7 +675,7 @@ const rule = {
             } else if (codePathNode.type === 'Program') {
               // These are dangerous if you have inline requires enabled.
               const message =
-                `React Hook "${getSourceCode().getText(
+                `React Hook "${sourceCode.getText(
                   hook,
                 )}" cannot be called ` +
                 'at the top level. React Hooks must be called in a ' +
@@ -713,7 +690,7 @@ const rule = {
               // `use(...)` can be called in callbacks.
               if (isSomewhereInsideComponentOrHook && !isUseIdentifier(hook)) {
                 const message =
-                  `React Hook "${getSourceCode().getText(
+                  `React Hook "${sourceCode.getText(
                     hook,
                   )}" cannot be called ` +
                   'inside a callback. React Hooks must be called in a ' +
@@ -776,7 +753,7 @@ const rule = {
         // effect or another event function. It isn't being called either.
         if (lastEffect == null && useEffectEventFunctions.has(node)) {
           const message = useEffectEventError(
-            getSourceCode().getText(node),
+            sourceCode.getText(node),
             node.parent.type === 'CallExpression',
           )
 
@@ -793,27 +770,27 @@ const rule = {
       FunctionDeclaration(node) {
         // function MyComponent() { const onClick = useEffectEvent(...) }
         if (isInsideComponentOrHook(node)) {
-          recordAllUseEffectEventFunctions(getScope(node))
+          recordAllUseEffectEventFunctions(sourceCode.getScope(node))
         }
       },
 
       ArrowFunctionExpression(node) {
         // const MyComponent = () => { const onClick = useEffectEvent(...) }
         if (isInsideComponentOrHook(node)) {
-          recordAllUseEffectEventFunctions(getScope(node))
+          recordAllUseEffectEventFunctions(sourceCode.getScope(node))
         }
       },
 
       // @ts-expect-error parser-hermes produces these node types
       ComponentDeclaration(node) {
         // component MyComponent() { const onClick = useEffectEvent(...) }
-        recordAllUseEffectEventFunctions(getScope(node))
+        recordAllUseEffectEventFunctions(sourceCode.getScope(node))
       },
 
       // @ts-expect-error parser-hermes produces these node types
       HookDeclaration(node) {
         // hook useMyHook() { const onClick = useEffectEvent(...) }
-        recordAllUseEffectEventFunctions(getScope(node))
+        recordAllUseEffectEventFunctions(sourceCode.getScope(node))
       },
     }
   },

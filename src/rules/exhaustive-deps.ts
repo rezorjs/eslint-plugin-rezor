@@ -55,8 +55,9 @@ const rule = {
     ],
   },
   create(context: Rule.RuleContext) {
-    const rawOptions = context.options && context.options[0]
-    const settings = context.settings || {}
+    const rawOptions = context.options[0]
+    const settings = context.settings
+    const sourceCode = context.sourceCode
 
     // Parse the `additionalHooks` regex.
     // Use rule-level additionalHooks if provided, otherwise fall back to settings
@@ -103,30 +104,7 @@ const rule = {
       context.report(problem)
     }
 
-    /**
-     * SourceCode that also works down to ESLint 3.0.0
-     */
-    const getSourceCode =
-      typeof context.getSourceCode === 'function' ?
-        () => {
-          return context.getSourceCode()
-        }
-      : () => {
-          return context.sourceCode
-        }
-    /**
-     * SourceCode#getScope that also works down to ESLint 3.0.0
-     */
-    const getScope =
-      typeof context.getScope === 'function' ?
-        () => {
-          return context.getScope()
-        }
-      : (node: Node) => {
-          return context.sourceCode.getScope(node)
-        }
-
-    const scopeManager = getSourceCode().scopeManager
+    const scopeManager = sourceCode.scopeManager
 
     // Should be shared between visitors.
     const setStateCallSites = new WeakMap<
@@ -624,11 +602,11 @@ const rule = {
           node: writeExpr,
           message:
             `Assignments to the '${key}' variable from inside React Hook ` +
-            `${getSourceCode().getText(reactiveHook)} will be lost after each ` +
+            `${sourceCode.getText(reactiveHook)} will be lost after each ` +
             `render. To preserve the value over time, store it in a useRef ` +
             `Hook and keep the mutable value in the '.current' property. ` +
             `Otherwise, you can move this variable directly inside ` +
-            `${getSourceCode().getText(reactiveHook)}.`,
+            `${sourceCode.getText(reactiveHook)}.`,
         })
       }
 
@@ -739,7 +717,7 @@ const rule = {
         reportProblem({
           node: declaredDependenciesNode,
           message:
-            `React Hook ${getSourceCode().getText(reactiveHook)} was passed a ` +
+            `React Hook ${sourceCode.getText(reactiveHook)} was passed a ` +
             'dependency list that is not an array literal. This means we ' +
             "can't statically verify whether you've passed the correct " +
             'dependencies.',
@@ -761,7 +739,7 @@ const rule = {
               reportProblem({
                 node: declaredDependencyNode,
                 message:
-                  `React Hook ${getSourceCode().getText(reactiveHook)} has a spread ` +
+                  `React Hook ${sourceCode.getText(reactiveHook)} has a spread ` +
                   "element in its dependency array. This means we can't " +
                   "statically verify whether you've passed the " +
                   'correct dependencies.',
@@ -773,12 +751,12 @@ const rule = {
                 node: declaredDependencyNode,
                 message:
                   'Functions returned from `useEffectEvent` must not be included in the dependency array. ' +
-                  `Remove \`${getSourceCode().getText(
+                  `Remove \`${sourceCode.getText(
                     declaredDependencyNode,
                   )}\` from the list.`,
                 suggest: [
                   {
-                    desc: `Remove the dependency \`${getSourceCode().getText(
+                    desc: `Remove the dependency \`${sourceCode.getText(
                       declaredDependencyNode,
                     )}\``,
                     fix(fixer) {
@@ -825,7 +803,7 @@ const rule = {
                   reportProblem({
                     node: declaredDependencyNode,
                     message:
-                      `React Hook ${getSourceCode().getText(reactiveHook)} has a ` +
+                      `React Hook ${sourceCode.getText(reactiveHook)} has a ` +
                       `complex expression in the dependency array. ` +
                       'Extract it to a separate variable so it can be statically checked.',
                   })
@@ -1102,7 +1080,7 @@ const rule = {
             ` However, 'props' will change when *any* prop changes, so the ` +
             `preferred fix is to destructure the 'props' object outside of ` +
             `the ${reactiveHookName} call and refer to those specific props ` +
-            `inside ${getSourceCode().getText(reactiveHook)}.`
+            `inside ${sourceCode.getText(reactiveHook)}.`
         }
       }
 
@@ -1267,7 +1245,7 @@ const rule = {
       reportProblem({
         node: declaredDependenciesNode,
         message:
-          `React Hook ${getSourceCode().getText(reactiveHook)} has ` +
+          `React Hook ${sourceCode.getText(reactiveHook)} has ` +
           // To avoid a long message, show the next actionable item.
           (getWarningMessage(missingDependencies, 'a', 'missing', 'include') ||
             getWarningMessage(
@@ -1417,7 +1395,7 @@ const rule = {
             return // Handled
           }
           // We'll do our best effort to find it, complain otherwise.
-          const variable = getScope(callback).set.get(callback.name)
+          const variable = sourceCode.getScope(callback).set.get(callback.name)
           if (variable == null || variable.defs == null) {
             // If it's not in scope, we don't care.
             return // Handled
@@ -2011,7 +1989,7 @@ function getReactiveHookCallbackIndex(
 }
 
 /**
- * ESLint won't assign node.parent to references from context.getScope()
+ * ESLint won't assign node.parent to scope references.
  *
  * So instead we search for the node from an ancestor assigning node.parent
  * as we go. This mutates the AST.
