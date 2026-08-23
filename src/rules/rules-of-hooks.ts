@@ -10,8 +10,6 @@ import type {
   TryStatement,
 } from 'estree'
 
-// @ts-expect-error untyped module
-import CodePathAnalyzer from '../code-path-analysis/code-path-analyzer.js'
 import { getAdditionalEffectHooksFromSettings } from '../shared/utils.js'
 
 /**
@@ -274,7 +272,7 @@ const rule = {
       )
     }
 
-    const analyzer = new CodePathAnalyzer({
+    return {
       // Maintain code segment path stack as we traverse.
       onCodePathSegmentStart: (segment: Rule.CodePathSegment) =>
         codePathSegmentStack.push(segment),
@@ -725,16 +723,6 @@ const rule = {
             }
           }
         }
-      },
-    })
-
-    return {
-      '*'(node: any) {
-        analyzer.enterNode(node)
-      },
-
-      '*:exit'(node: any) {
-        analyzer.leaveNode(node)
       },
 
       // Missed opportunity...We could visit all `Identifier`s instead of all
