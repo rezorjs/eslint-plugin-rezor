@@ -10,24 +10,9 @@ function isHookName(s: string): boolean {
   return /^use[A-Z0-9]/.test(s)
 }
 
-/**
- * We consider hooks to be a hook name identifier or a member expression
- * containing a hook name.
- */
+/** We consider hooks to be hook name identifiers. */
 function isHook(node: Node): boolean {
-  if (node.type === 'Identifier') {
-    return isHookName(node.name)
-  } else if (
-    node.type === 'MemberExpression' &&
-    !node.computed &&
-    isHook(node.property)
-  ) {
-    const obj = node.object
-    const isPascalCaseNameSpace = /^[A-Z].*/
-    return obj.type === 'Identifier' && isPascalCaseNameSpace.test(obj.name)
-  } else {
-    return false
-  }
+  return node.type === 'Identifier' && isHookName(node.name)
 }
 
 function isRezorComponentFactory(node: Node): boolean {
@@ -202,7 +187,7 @@ const rule = {
       //
       // Everything is ok if all hooks are both reachable from the initial
       // segment and reachable from every final segment.
-      onCodePathEnd(codePath: any, codePathNode: Node) {
+      onCodePathEnd(codePath: Rule.CodePath, codePathNode: Node) {
         const hooksMap = codePathHooksMapStack.pop()
         if (hooksMap?.size === 0) {
           return
@@ -425,8 +410,6 @@ const rule = {
 
         // This is a valid code path for hooks if it belongs to a Rezor component
         // or a custom hook function.
-        const isSomewhereInsideComponentOrHook =
-          isInsideComponentOrHook(codePathNode)
         const isDirectlyInsideComponentOrHook =
           isRezorComponentFunction(codePathNode) ||
           (codePathFunctionName != null && isHook(codePathFunctionName))
@@ -586,18 +569,11 @@ const rule = {
                 'component or a custom Hook function.'
               context.report({ node: hook, message })
             } else {
-              // Assume in all other cases the user called a hook in some
-              // random function callback. This should usually be true for
-              // anonymous function expressions. Hopefully this is clarifying
-              // enough in the common case that the incorrect message in
-              // uncommon cases doesn't matter.
-              if (isSomewhereInsideComponentOrHook) {
-                const message =
-                  `Rezor Hook "${sourceCode.getText(hook)}" cannot be called ` +
-                  'inside a callback. Rezor Hooks must be called in a Rezor ' +
-                  'component or a custom Hook function.'
-                context.report({ node: hook, message })
-              }
+              const message =
+                `Rezor Hook "${sourceCode.getText(hook)}" cannot be called ` +
+                'inside a callback. Rezor Hooks must be called in a Rezor ' +
+                'component or a custom Hook function.'
+              context.report({ node: hook, message })
             }
           }
         }
@@ -738,9 +714,7 @@ function getFunctionName(node: Node) {
       return node.parent.key
     } else if (
       node.parent?.type === 'AssignmentPattern' &&
-      node.parent.right === node &&
-      // @ts-expect-error Property computed does not exist on type `AssignmentPattern`.
-      !node.parent.computed
+      node.parent.right === node
     ) {
       // const {useHook = () => {}} = {};
       // ({useHook = () => {}} = {});
