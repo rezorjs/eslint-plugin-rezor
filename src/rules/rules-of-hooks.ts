@@ -734,7 +734,7 @@ function getFunctionName(node: Node) {
  * Convenience function for peeking the last item in a stack.
  */
 function last<T>(array: Array<T>): T {
-  return array[array.length - 1] as T
+  return array[array.length - 1]
 }
 
 export default rule

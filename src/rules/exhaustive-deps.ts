@@ -987,7 +987,7 @@ const rule = {
             ` Mutable values like '${badRef}' aren't valid dependencies ` +
             "because mutating them doesn't re-render the component."
         } else if (externalDependencies.size > 0) {
-          const dep = Array.from(externalDependencies)[0]!
+          const dep = Array.from(externalDependencies)[0]
           // Don't show this warning for things that likely just got moved *inside* the callback
           // because in that case they're clearly not referring to globals.
           if (!scope.set.has(dep)) {
@@ -1294,7 +1294,7 @@ const rule = {
 
       switch (callback.type) {
         case 'FunctionExpression':
-        case 'ArrowFunctionExpression':
+        case 'ArrowFunctionExpression': {
           visitFunctionWithDependencies(
             callback,
             declaredDependenciesNode,
@@ -1303,7 +1303,8 @@ const rule = {
             isEffect,
           )
           return // Handled
-        case 'Identifier':
+        }
+        case 'Identifier': {
           if (!declaredDependenciesNode) {
             // Always runs, no problems.
             return // Handled
@@ -1347,7 +1348,7 @@ const rule = {
             break // Unhandled
           }
           switch (def.node.type) {
-            case 'FunctionDeclaration':
+            case 'FunctionDeclaration': {
               // useEffect(() => { ... }, []);
               visitFunctionWithDependencies(
                 def.node,
@@ -1357,7 +1358,8 @@ const rule = {
                 isEffect,
               )
               return // Handled
-            case 'VariableDeclarator':
+            }
+            case 'VariableDeclarator': {
               const init = def.node.init
               if (!init) {
                 break // Unhandled
@@ -1378,15 +1380,18 @@ const rule = {
                   return // Handled
               }
               break // Unhandled
+            }
           }
           break // Unhandled
-        default:
+        }
+        default: {
           // useEffect(generateEffectBody(), []);
           context.report({
             node: reactiveHook,
             message: getUnknownDependenciesMessage(reactiveHookName),
           })
           return // Handled
+        }
       }
 
       // Something unusual. Fall back to suggesting to add the body itself as a dep.
@@ -1725,7 +1730,7 @@ function scanForConstructions({
   }
 
   return constructions.map(([ref, depType]) => ({
-    construction: ref.defs[0] as Scope.Definition,
+    construction: ref.defs[0],
     depType,
     isUsedOutsideOfHook: isUsedOutsideOfHook(ref),
   }))
