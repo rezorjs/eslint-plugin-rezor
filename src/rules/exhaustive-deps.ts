@@ -10,7 +10,6 @@ import type {
   Node,
   Pattern,
   Super,
-  VariableDeclarator,
 } from 'estree'
 import { getAdditionalEffectHooksFromSettings } from '../shared/utils.js'
 
@@ -329,15 +328,12 @@ const rule = {
           return false
         }
         const def = resolved.defs[0]
-        if (def == null) {
+        if (def?.type !== 'Variable') {
           return false
         }
         // Look for `let stuff = ...`
-        const defNode: VariableDeclarator = def.node
-        if (defNode.type !== 'VariableDeclarator') {
-          return false
-        }
-        let init = defNode.init
+        const defNode = def.node
+        let init = defNode.init as Node | null | undefined
         if (init == null) {
           return false
         }
@@ -370,8 +366,7 @@ const rule = {
         if (callee.type !== 'Identifier') {
           return false
         }
-        const definitionNode: VariableDeclarator = def.node
-        const id = definitionNode.id
+        const id = defNode.id
         const { name } = callee
         if (name === 'useRef' && id.type === 'Identifier') {
           // useRef() return value is stable.
@@ -381,7 +376,7 @@ const rule = {
           id.type === 'Identifier'
         ) {
           for (const ref of resolved.references) {
-            if (ref.identifier !== id) {
+            if (ref.identifier.type === 'Identifier' && ref.identifier !== id) {
               useEffectEventVariables.add(ref.identifier)
             }
           }
@@ -401,6 +396,9 @@ const rule = {
                 const references = resolved.references
                 let writeCount = 0
                 for (const reference of references) {
+                  if (reference.identifier.type !== 'Identifier') {
+                    continue
+                  }
                   if (reference.isWrite()) {
                     writeCount++
                   }
@@ -416,7 +414,9 @@ const rule = {
               if (name === 'useState') {
                 const references = resolved.references
                 for (const reference of references) {
-                  stateVariables.add(reference.identifier)
+                  if (reference.identifier.type === 'Identifier') {
+                    stateVariables.add(reference.identifier)
+                  }
                 }
               }
               // State variable itself is dynamic.
@@ -436,10 +436,11 @@ const rule = {
           return false
         }
         const def = resolved.defs[0]
-        if (def == null) {
-          return false
-        }
-        if (def.node == null || def.node.id == null) {
+        if (
+          def == null ||
+          (def.type !== 'FunctionName' && def.type !== 'Variable') ||
+          (def.type === 'FunctionName' && def.node.id == null)
+        ) {
           return false
         }
         // Search the direct component subscopes for
@@ -516,6 +517,9 @@ const rule = {
           // Narrow the scope of a dependency if it is, say, a member expression.
           // Then normalize the narrowed dependency.
           const referenceNode = reference.identifier
+          if (referenceNode.type !== 'Identifier') {
+            continue
+          }
           const dependencyNode = getDependency(referenceNode)
           const dependency = analyzePropertyChain(
             dependencyNode,
@@ -534,7 +538,7 @@ const rule = {
             continue
           }
           // Ignore references to the function itself as it's not defined yet.
-          if (def.node != null && def.node.init === node.parent) {
+          if (def.type === 'Variable' && def.node.init === node.parent) {
             continue
           }
           // Add the dependency to a map so we can make sure it is referenced
@@ -607,6 +611,9 @@ const rule = {
             }
 
             const id = reference.identifier
+            if (id.type !== 'Identifier') {
+              return
+            }
             const isSetState = setStateCallSites.has(id)
             if (!isSetState) {
               return
@@ -769,7 +776,7 @@ const rule = {
               }
             }
 
-            let maybeID = declaredDependencyNode
+            let maybeID: Node = declaredDependencyNode
             while (true) {
               if (maybeID.type === 'MemberExpression') {
                 maybeID = maybeID.object
@@ -1058,6 +1065,9 @@ const rule = {
           let isFunctionCall = false
           let id: Identifier | undefined
           for (const reference of usedDep.references) {
+            if (reference.identifier.type !== 'Identifier') {
+              continue
+            }
             id = reference.identifier
             if (
               id != null &&
@@ -1100,6 +1110,9 @@ const rule = {
           let id
           let maybeCall
           for (const reference of references) {
+            if (reference.identifier.type !== 'Identifier') {
+              continue
+            }
             id = reference.identifier
             maybeCall = id.parent
             // Try to see if we have setState(someExpr(missingDep)).
@@ -1231,7 +1244,7 @@ const rule = {
         // Not a Rezor Hook call that needs deps.
         return
       }
-      let callback = node.arguments[callbackIndex]
+      let callback = node.arguments[callbackIndex] as Node | undefined
       const reactiveHook = node.callee
       const reactiveHookName =
         reactiveHook.type === 'Identifier' ? reactiveHook.name : ''
@@ -1721,7 +1734,10 @@ function scanForConstructions({
       if (currentScope !== scope) {
         // This reference is outside the Hook callback.
         // It can only be legit if it's the deps array.
-        if (!isAncestorNodeOf(declaredDependenciesNode, reference.identifier)) {
+        if (
+          reference.identifier.type === 'Identifier' &&
+          !isAncestorNodeOf(declaredDependenciesNode, reference.identifier)
+        ) {
           return true
         }
       }
