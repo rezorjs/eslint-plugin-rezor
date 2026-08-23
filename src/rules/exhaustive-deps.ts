@@ -25,6 +25,85 @@ type DependencyTreeNode = {
   children: Map<string, DependencyTreeNode> // Nodes for properties
 }
 
+function getRezorRenderFactoryName(
+  node: Node,
+): 'defineApp' | 'defineComponent' | null {
+  if (
+    node.type !== 'ArrowFunctionExpression' &&
+    node.type !== 'FunctionExpression'
+  ) {
+    return null
+  }
+
+  const parent = node.parent
+  let callExpression: CallExpression | undefined
+
+  if (parent?.type === 'CallExpression' && parent.arguments[0] === node) {
+    callExpression = parent
+  } else if (
+    parent?.type === 'Property' &&
+    parent.value === node &&
+    !parent.computed &&
+    parent.key.type === 'Identifier' &&
+    parent.key.name === 'render'
+  ) {
+    const objectExpression = parent.parent
+    const parentCallExpression = objectExpression?.parent
+    if (
+      objectExpression?.type === 'ObjectExpression' &&
+      parentCallExpression?.type === 'CallExpression' &&
+      parentCallExpression.arguments[0] === objectExpression
+    ) {
+      callExpression = parentCallExpression
+    }
+  }
+
+  const callee = callExpression?.callee
+  if (
+    callee?.type === 'Identifier' &&
+    (callee.name === 'defineApp' || callee.name === 'defineComponent')
+  ) {
+    return callee.name
+  }
+  return null
+}
+
+function isInsideRestElement(identifier: Identifier, pattern: Node): boolean {
+  let current: Node | undefined = identifier
+  while (current && current !== pattern) {
+    if (current.parent?.type === 'RestElement') {
+      return true
+    }
+    current = current.parent
+  }
+  return false
+}
+
+function isStableRezorRenderParameter(resolved: Scope.Variable): boolean {
+  const def = resolved.defs[0]
+  if (def?.type !== 'Parameter') {
+    return false
+  }
+
+  const functionNode = def.node
+  const factoryName = getRezorRenderFactoryName(functionNode)
+  if (!factoryName) {
+    return false
+  }
+
+  const stableParameterIndex = factoryName === 'defineApp' ? 0 : 1
+  const parameter = functionNode.params[stableParameterIndex]
+  const identifier = resolved.identifiers[0]
+
+  return !!(
+    parameter &&
+    identifier &&
+    !resolved.references.some((reference) => reference.isWrite()) &&
+    isAncestorNodeOf(parameter, identifier) &&
+    !isInsideRestElement(identifier, parameter)
+  )
+}
+
 const rule = {
   meta: {
     type: 'suggestion',
@@ -170,7 +249,82 @@ const rule = {
       // const onStuff = useEffectEvent(() => {})
       //       ^^^ true for this reference
       // False for everything else.
+      function getStableAccessRoot(node: Node): Identifier | null {
+        if (node.type === 'Identifier') {
+          return node
+        }
+        if (node.type === 'TSAsExpression') {
+          return getStableAccessRoot(node.expression)
+        }
+        if (node.type === 'ChainExpression') {
+          return getStableAccessRoot(node.expression)
+        }
+        if (node.type === 'MemberExpression') {
+          if (node.computed && node.property.type !== 'Literal') {
+            return null
+          }
+          return getStableAccessRoot(node.object)
+        }
+        return null
+      }
+
+      function findVariable(identifier: Identifier): Scope.Variable | null {
+        let currentScope: Scope.Scope | null = sourceCode.getScope(identifier)
+        while (currentScope) {
+          const variable = currentScope.set.get(identifier.name)
+          if (variable) {
+            return variable
+          }
+          currentScope = currentScope.upper
+        }
+        return null
+      }
+
+      function isStableRezorRenderValue(
+        resolved: Scope.Variable,
+        seen = new Set<Scope.Variable>(),
+      ): boolean {
+        if (isStableRezorRenderParameter(resolved)) {
+          return true
+        }
+        if (seen.has(resolved)) {
+          return false
+        }
+        seen.add(resolved)
+
+        const def = resolved.defs[0]
+        if (
+          def?.type !== 'Variable' ||
+          def.node.type !== 'VariableDeclarator'
+        ) {
+          return false
+        }
+
+        const declarator = def.node
+        const declaration = declarator.parent
+        const identifier = resolved.identifiers[0]
+        if (
+          declaration?.type !== 'VariableDeclaration' ||
+          declaration.kind !== 'const' ||
+          !declarator.init ||
+          !identifier ||
+          isInsideRestElement(identifier, declarator.id)
+        ) {
+          return false
+        }
+
+        const rootIdentifier = getStableAccessRoot(declarator.init)
+        const sourceVariable =
+          rootIdentifier ? findVariable(rootIdentifier) : null
+        return !!(
+          sourceVariable && isStableRezorRenderValue(sourceVariable, seen)
+        )
+      }
+
       function isStableKnownHookValue(resolved: Scope.Variable): boolean {
+        if (isStableRezorRenderValue(resolved)) {
+          return true
+        }
         if (!isArray(resolved.defs)) {
           return false
         }
