@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-rezor",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "type": "module",
   "description": "ESLint rules for Rezor",
   "main": "./dist/index.js",
