@@ -490,7 +490,7 @@ function functionError(hook: string, fn: string) {
     message:
       `Rezor Hook "${hook}" is called in function "${fn}" that is neither ` +
       'a Rezor component function nor a custom Hook function.' +
-      ' Rezor component functions must be passed to defineApp or ' +
+      ' Rezor component functions must be passed to createApp or ' +
       'defineComponent.' +
       ' Hook names must start with the word "use".',
   }
@@ -548,14 +548,14 @@ const allTests = {
     ...tests.valid,
     {
       code: normalizeIndent`
-        defineApp(() => {
+        createApp(() => {
           useState();
         });
       `,
     },
     {
       code: normalizeIndent`
-        defineApp({
+        createApp({
           render() {
             useState();
           },
@@ -601,7 +601,7 @@ const allTests = {
     },
     {
       code: normalizeIndent`
-        defineApp({
+        createApp({
           render() {
             items.forEach(() => useState());
           },

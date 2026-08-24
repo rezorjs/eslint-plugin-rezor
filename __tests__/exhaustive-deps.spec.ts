@@ -6867,7 +6867,7 @@ const allTests = {
     ...tests.valid,
     {
       code: normalizeIndent`
-        defineApp((options) => {
+        createApp((options) => {
           useEffect(() => {
             console.log(options.scene);
           }, []);
@@ -6876,7 +6876,7 @@ const allTests = {
     },
     {
       code: normalizeIndent`
-        defineApp({
+        createApp({
           render({ scene }) {
             useEffect(() => {
               console.log(scene);
@@ -6887,7 +6887,7 @@ const allTests = {
     },
     {
       code: normalizeIndent`
-        defineApp((options) => {
+        createApp((options) => {
           const { scene } = options
           useEffect(() => {
             console.log(scene);

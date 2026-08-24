@@ -18,7 +18,7 @@ function isHook(node: Node): boolean {
 function isRezorComponentFactory(node: Node): boolean {
   return (
     node.type === 'Identifier' &&
-    (node.name === 'defineApp' || node.name === 'defineComponent')
+    (node.name === 'createApp' || node.name === 'defineComponent')
   )
 }
 
@@ -557,7 +557,7 @@ const rule = {
                 `function "${sourceCode.getText(codePathFunctionName)}" ` +
                 'that is neither a Rezor component function nor a custom ' +
                 'Hook function.' +
-                ' Rezor component functions must be passed to defineApp or ' +
+                ' Rezor component functions must be passed to createApp or ' +
                 'defineComponent.' +
                 ' Hook names must start with the word "use".'
               context.report({ node: hook, message })

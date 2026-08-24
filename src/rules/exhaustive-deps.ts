@@ -26,7 +26,7 @@ type DependencyTreeNode = {
 
 function getRezorRenderFactoryName(
   node: Node,
-): 'defineApp' | 'defineComponent' | null {
+): 'createApp' | 'defineComponent' | null {
   if (
     node.type !== 'ArrowFunctionExpression' &&
     node.type !== 'FunctionExpression'
@@ -60,7 +60,7 @@ function getRezorRenderFactoryName(
   const callee = callExpression?.callee
   if (
     callee?.type === 'Identifier' &&
-    (callee.name === 'defineApp' || callee.name === 'defineComponent')
+    (callee.name === 'createApp' || callee.name === 'defineComponent')
   ) {
     return callee.name
   }
@@ -90,7 +90,7 @@ function isStableRezorRenderParameter(resolved: Scope.Variable): boolean {
     return false
   }
 
-  const stableParameterIndex = factoryName === 'defineApp' ? 0 : 1
+  const stableParameterIndex = factoryName === 'createApp' ? 0 : 1
   const parameter = functionNode.params[stableParameterIndex]
   const identifier = resolved.identifiers[0]
 

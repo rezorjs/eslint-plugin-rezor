@@ -5,9 +5,9 @@ This is a ESLint plugin for [Rezor](https://github.com/rezorjs/rezor) which enfo
 The typical Rezor codes is bellow:
 
 ```js [app.js]
-import { defineApp, useState, useEffect } from 'rezor'
+import { createApp, useState, useEffect } from 'rezor'
 
-defineApp((options) => {
+createApp((options) => {
   const [count, setCount] = useState(0)
 
   const increment = () => {
@@ -23,9 +23,9 @@ defineApp((options) => {
 ```
 
 ```js [app.js]
-import { defineApp, useState, useEffect } from 'rezor'
+import { createApp, useState, useEffect } from 'rezor'
 
-defineApp({
+createApp({
   render(options) {
     const [count, setCount] = useState(0)
 
@@ -98,4 +98,4 @@ export function useCount() {
 }
 ```
 
-Please note that `options` parameter of defineApp render, and `context` parameter of defineComponent render. They are stable objects, their fields are also stable, so they can be ignored in the deps array, just like the setState.
+Please note that `options` parameter of createApp render, and `context` parameter of defineComponent render. They are stable objects, their fields are also stable, so they can be ignored in the deps array, just like the setState.
