@@ -3,13 +3,18 @@
   "version": "0.0.0",
   "type": "module",
   "description": "ESLint rules for Rezor",
-  "main": "index.js",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "repository": "https://github.com/rezorjs/eslint-plugin-rezor.git",
   "author": "Yang Mingshan <y.mingshan3@gmail.com>",
   "license": "MIT",
+  "files": [
+    "dist"
+  ],
   "exports": {
     ".": {
-      "default": "./index.js"
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     },
     "./package.json": "./package.json"
   },
@@ -18,6 +23,7 @@
     "lint": "eslint .",
     "type": "tsc --noEmit",
     "test": "node --test __tests__/*.spec.ts",
+    "build": "rm -rf dist && tsc --declaration --project tsconfig.build.json",
     "prepare": "husky"
   },
   "keywords": [

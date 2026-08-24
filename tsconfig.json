@@ -12,5 +12,5 @@
     "noUnusedParameters": true,
     "rewriteRelativeImportExtensions": true
   },
-  "include": ["estree.d.ts", "src", "__tests__"]
+  "include": ["estree.d.ts", "src", "dist", "__tests__"]
 }
