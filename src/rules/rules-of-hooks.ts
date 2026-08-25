@@ -85,7 +85,10 @@ function isInsideDoWhileLoop(node: Node | undefined): node is DoWhileStatement {
   return false
 }
 
-function isEffectIdentifier(node: Node, additionalHooks?: RegExp): boolean {
+function isEffectIdentifier(
+  node: Node,
+  additionalEffectHooks?: RegExp,
+): boolean {
   const isBuiltInEffect =
     node.type === 'Identifier' &&
     (node.name === 'useEffect' || node.name === 'useRenderEffect')
@@ -94,9 +97,9 @@ function isEffectIdentifier(node: Node, additionalHooks?: RegExp): boolean {
     return true
   }
 
-  // Check if this matches additional hooks configured by the user
-  if (additionalHooks && node.type === 'Identifier') {
-    return additionalHooks.test(node.name)
+  // Check if this matches additional effect hooks configured by the user
+  if (additionalEffectHooks && node.type === 'Identifier') {
+    return additionalEffectHooks.test(node.name)
   }
 
   return false
@@ -126,13 +129,6 @@ const rule = {
   meta: {
     type: 'problem',
     docs: { description: 'enforces the Rules of Hooks', recommended: true },
-    schema: [
-      {
-        type: 'object',
-        additionalProperties: false,
-        properties: { additionalHooks: { type: 'string' } },
-      },
-    ],
   },
   create(context: Rule.RuleContext) {
     const settings = context.settings

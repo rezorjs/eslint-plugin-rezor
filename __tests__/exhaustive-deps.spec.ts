@@ -478,36 +478,6 @@ const tests = {
     {
       code: normalizeIndent`
         function useMyComponent(props) {
-          useCustomEffect(() => {
-            console.log(props.foo);
-          });
-        }
-      `,
-      options: [{ additionalHooks: 'useCustomEffect' }],
-    },
-    {
-      code: normalizeIndent`
-        function useMyComponent(props) {
-          useCustomEffect(() => {
-            console.log(props.foo);
-          }, [props.foo]);
-        }
-      `,
-      options: [{ additionalHooks: 'useCustomEffect' }],
-    },
-    {
-      code: normalizeIndent`
-        function useMyComponent(props) {
-          useCustomEffect(() => {
-            console.log(props.foo);
-          }, []);
-        }
-      `,
-      options: [{ additionalHooks: 'useAnotherEffect' }],
-    },
-    {
-      code: normalizeIndent`
-        function useMyComponent(props) {
           useWithoutEffectSuffix(() => {
             console.log(props.foo);
           }, []);
@@ -1264,7 +1234,7 @@ const tests = {
       `,
     },
     {
-      // Test settings-based additionalHooks - should work with settings
+      // Test settings-based additionalEffectHooks - should work with settings
       code: normalizeIndent`
         function useMyComponent(props) {
           useCustomEffect(() => {
@@ -1275,7 +1245,7 @@ const tests = {
       settings: { rezor: { additionalEffectHooks: 'useCustomEffect' } },
     },
     {
-      // Test settings-based additionalHooks - should work with dependencies
+      // Test settings-based additionalEffectHooks - should work with dependencies
       code: normalizeIndent`
         function useMyComponent(props) {
           useCustomEffect(() => {
@@ -1283,18 +1253,6 @@ const tests = {
           }, [props.foo]);
         }
       `,
-      settings: { rezor: { additionalEffectHooks: 'useCustomEffect' } },
-    },
-    {
-      // Test that rule-level additionalHooks takes precedence over settings
-      code: normalizeIndent`
-        function useMyComponent(props) {
-          useCustomEffect(() => {
-            console.log(props.foo);
-          }, []);
-        }
-      `,
-      options: [{ additionalHooks: 'useAnotherEffect' }],
       settings: { rezor: { additionalEffectHooks: 'useCustomEffect' } },
     },
     {
@@ -1330,38 +1288,6 @@ const tests = {
     },
   ],
   invalid: [
-    {
-      code: normalizeIndent`
-        function useMyComponent(props) {
-          useSpecialEffect(() => {
-            console.log(props.foo);
-          }, null);
-        }
-      `,
-      options: [{ additionalHooks: 'useSpecialEffect' }],
-      errors: [
-        {
-          message:
-            "Rezor Hook useSpecialEffect was passed a dependency list that is not an array literal. This means we can't statically verify whether you've passed the correct dependencies.",
-        },
-        {
-          message:
-            "Rezor Hook useSpecialEffect has a missing dependency: 'props.foo'. Either include it or remove the dependency array.",
-          suggestions: [
-            {
-              desc: 'Update the dependencies array to be: [props.foo]',
-              output: normalizeIndent`
-                function useMyComponent(props) {
-                  useSpecialEffect(() => {
-                    console.log(props.foo);
-                  }, [props.foo]);
-                }
-              `,
-            },
-          ],
-        },
-      ],
-    },
     {
       code: normalizeIndent`
         function useMyComponent(props) {
@@ -3378,7 +3304,7 @@ const tests = {
       ],
     },
     {
-      // Test settings-based additionalHooks - should detect missing dependency
+      // Test settings-based additionalEffectHooks - should detect missing dependency
       code: normalizeIndent`
         function useMyComponent(props) {
           useCustomEffect(() => {

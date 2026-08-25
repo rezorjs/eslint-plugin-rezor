@@ -116,31 +116,22 @@ const rule = {
       {
         type: 'object',
         additionalProperties: false,
-        properties: {
-          additionalHooks: { type: 'string' },
-          requireExplicitEffectDeps: { type: 'boolean' },
-        },
+        properties: { requireExplicitEffectDeps: { type: 'boolean' } },
       },
     ],
   },
   create(context: Rule.RuleContext) {
     const rawOptions = context.options[0] as
-      | undefined
-      | { additionalHooks?: string; requireExplicitEffectDeps?: boolean }
+      undefined | { requireExplicitEffectDeps?: boolean }
     const settings = context.settings
     const sourceCode = context.sourceCode
 
-    // Parse the `additionalHooks` regex.
-    // Use rule-level additionalHooks if provided, otherwise fall back to settings
-    const additionalHooks =
-      rawOptions && rawOptions.additionalHooks ?
-        new RegExp(rawOptions.additionalHooks)
-      : getAdditionalEffectHooksFromSettings(settings)
+    const additionalEffectHooks = getAdditionalEffectHooksFromSettings(settings)
 
     const requireExplicitEffectDeps =
       (rawOptions && rawOptions.requireExplicitEffectDeps) || false
 
-    const options = { additionalHooks, requireExplicitEffectDeps }
+    const options = { additionalEffectHooks, requireExplicitEffectDeps }
 
     const scopeManager = sourceCode.scopeManager
 
@@ -1860,7 +1851,7 @@ function analyzePropertyChain(
 // For additionally configured Hooks, assume that they're like useEffect (0).
 function getReactiveHookCallbackIndex(
   calleeNode: Expression | Super,
-  options?: { additionalHooks: RegExp | undefined },
+  options?: { additionalEffectHooks: RegExp | undefined },
 ): 0 | -1 {
   if (calleeNode.type !== 'Identifier') {
     return -1
@@ -1873,10 +1864,10 @@ function getReactiveHookCallbackIndex(
       // useEffect(fn)
       return 0
     default:
-      if (options?.additionalHooks) {
+      if (options?.additionalEffectHooks) {
         // Allow the user to provide a regular expression which enables the lint to
         // target custom reactive hooks.
-        return options.additionalHooks.test(calleeNode.name) ? 0 : -1
+        return options.additionalEffectHooks.test(calleeNode.name) ? 0 : -1
       }
       return -1
   }

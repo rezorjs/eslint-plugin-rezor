@@ -1,9 +1,12 @@
 export function getAdditionalEffectHooksFromSettings(settings: {
   rezor?: { additionalEffectHooks: string }
 }): RegExp | undefined {
-  const additionalHooks = settings.rezor?.additionalEffectHooks
-  if (additionalHooks != null && typeof additionalHooks === 'string') {
-    return new RegExp(additionalHooks)
+  const additionalEffectHooks = settings.rezor?.additionalEffectHooks
+  if (
+    additionalEffectHooks != null &&
+    typeof additionalEffectHooks === 'string'
+  ) {
+    return new RegExp(additionalEffectHooks)
   }
 
   return undefined
