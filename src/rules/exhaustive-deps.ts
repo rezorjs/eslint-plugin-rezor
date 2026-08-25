@@ -112,26 +112,12 @@ const rule = {
       recommended: true,
     },
     hasSuggestions: true,
-    schema: [
-      {
-        type: 'object',
-        additionalProperties: false,
-        properties: { requireExplicitEffectDeps: { type: 'boolean' } },
-      },
-    ],
   },
   create(context: Rule.RuleContext) {
-    const rawOptions = context.options[0] as
-      undefined | { requireExplicitEffectDeps?: boolean }
     const settings = context.settings
     const sourceCode = context.sourceCode
 
     const additionalEffectHooks = getAdditionalEffectHooksFromSettings(settings)
-
-    const requireExplicitEffectDeps =
-      (rawOptions && rawOptions.requireExplicitEffectDeps) || false
-
-    const options = { additionalEffectHooks, requireExplicitEffectDeps }
 
     const scopeManager = sourceCode.scopeManager
 
@@ -1232,7 +1218,10 @@ const rule = {
     }
 
     function visitCallExpression(node: CallExpression): void {
-      const callbackIndex = getReactiveHookCallbackIndex(node.callee, options)
+      const callbackIndex = getReactiveHookCallbackIndex(
+        node.callee,
+        additionalEffectHooks,
+      )
       if (callbackIndex === -1) {
         // Not a Rezor Hook call that needs deps.
         return
@@ -1262,15 +1251,6 @@ const rule = {
             `Did you forget to pass a callback to the hook?`,
         })
         return
-      }
-
-      if (!maybeNode && isEffect && options.requireExplicitEffectDeps) {
-        context.report({
-          node: reactiveHook,
-          message:
-            `Rezor Hook ${reactiveHookName} always requires dependencies. ` +
-            `Please add a dependency array or an explicit \`undefined\``,
-        })
       }
 
       // Check the declared dependencies for this reactive hook. If there is no
@@ -1851,7 +1831,7 @@ function analyzePropertyChain(
 // For additionally configured Hooks, assume that they're like useEffect (0).
 function getReactiveHookCallbackIndex(
   calleeNode: Expression | Super,
-  options?: { additionalEffectHooks: RegExp | undefined },
+  additionalEffectHooks?: RegExp,
 ): 0 | -1 {
   if (calleeNode.type !== 'Identifier') {
     return -1
@@ -1864,10 +1844,10 @@ function getReactiveHookCallbackIndex(
       // useEffect(fn)
       return 0
     default:
-      if (options?.additionalEffectHooks) {
+      if (additionalEffectHooks) {
         // Allow the user to provide a regular expression which enables the lint to
         // target custom reactive hooks.
-        return options.additionalEffectHooks.test(calleeNode.name) ? 0 : -1
+        return additionalEffectHooks.test(calleeNode.name) ? 0 : -1
       }
       return -1
   }

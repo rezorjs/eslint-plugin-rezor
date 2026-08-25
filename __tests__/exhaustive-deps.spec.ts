@@ -6768,23 +6768,6 @@ const tsTests = {
         },
       ],
     },
-    {
-      code: normalizeIndent`
-        function useMyComponent(props) {
-          useEffect(() => {
-            console.log(props.foo);
-          });
-        }
-      `,
-      options: [{ requireExplicitEffectDeps: true }],
-      errors: [
-        {
-          message:
-            'Rezor Hook useEffect always requires dependencies. Please add a dependency array or an explicit `undefined`',
-          suggestions: undefined,
-        },
-      ],
-    },
   ],
 }
 
