@@ -90,8 +90,7 @@ function isEffectIdentifier(
   additionalEffectHooks?: RegExp,
 ): boolean {
   const isBuiltInEffect =
-    node.type === 'Identifier' &&
-    (node.name === 'useEffect' || node.name === 'useRenderEffect')
+    node.type === 'Identifier' && node.name === 'useEffect'
 
   if (isBuiltInEffect) {
     return true
