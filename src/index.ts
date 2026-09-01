@@ -20,7 +20,7 @@ type ReactHooksFlatConfig = {
 const configs = { recommended: {} as ReactHooksFlatConfig }
 
 const plugin = {
-  meta: { name: 'eslint-plugin-rezor', version: '0.1.0' },
+  meta: { name: 'eslint-plugin-rezor', version: '0.2.0' },
   rules,
   configs,
 }
