@@ -28,11 +28,12 @@
   },
   "keywords": [
     "eslint",
+    "oxlint",
     "plugin",
     "rezor"
   ],
-  "peerDependencies": {
-    "eslint": "^10.9.0"
+  "dependencies": {
+    "@oxlint/plugins": "^1.81.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

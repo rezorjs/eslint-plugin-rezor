@@ -1,4 +1,5 @@
 import type { Linter, Rule } from 'eslint'
+import { eslintCompatPlugin } from '@oxlint/plugins'
 import ExhaustiveDeps from './rules/exhaustive-deps.ts'
 import RulesOfHooks from './rules/rules-of-hooks.ts'
 
@@ -19,11 +20,11 @@ type ReactHooksFlatConfig = {
 
 const configs = { recommended: {} as ReactHooksFlatConfig }
 
-const plugin = {
+const plugin = eslintCompatPlugin({
   meta: { name: 'eslint-plugin-rezor', version: '0.2.0' },
   rules,
   configs,
-}
+})
 
 Object.assign(configs.recommended, {
   plugins: { rezor: plugin },
